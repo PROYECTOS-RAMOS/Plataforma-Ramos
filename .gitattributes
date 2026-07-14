@@ -1,0 +1,2 @@
+# Ignorar los mockups estáticos de diseño en las estadísticas de lenguajes de GitHub
+stitch_web_application_design/** linguist-vendored
