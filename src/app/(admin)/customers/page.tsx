@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/src/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import CustomersClient from './CustomersClient'
 
 export default async function CustomersPage() {

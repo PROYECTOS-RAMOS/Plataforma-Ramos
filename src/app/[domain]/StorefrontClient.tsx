@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useCart, CartItem } from '@/src/lib/store/useCart'
-import { createClient } from '@/src/lib/supabase/client'
-import { Button } from '@/src/components/ui/button'
+import { useCart, CartItem } from '@/lib/store/useCart'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 import {
   ShoppingBag,
   Search,

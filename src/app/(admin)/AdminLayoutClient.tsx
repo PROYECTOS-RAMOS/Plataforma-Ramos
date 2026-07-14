@@ -3,8 +3,8 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { createClient } from '@/src/lib/supabase/client'
-import { Button } from '@/src/components/ui/button'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 import { 
   LayoutDashboard, 
   ShoppingBag, 

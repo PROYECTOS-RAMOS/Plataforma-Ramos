@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/src/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import DashboardClient from './DashboardClient'
 import Link from 'next/link'
 import { Store } from 'lucide-react'

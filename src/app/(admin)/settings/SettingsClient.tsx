@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { createClient } from '@/src/lib/supabase/client'
-import { Button } from '@/src/components/ui/button'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 import {
   Store,
   FileText,
