@@ -242,6 +242,32 @@ create trigger trigger_stores_updated_at
     for each row execute function public.handle_updated_at();
 
 -- ----------------------------------------------------
+-- 2.5 TABLA: STORE_MEMBERS (Colaboradores e Invitaciones de la Tienda)
+-- ----------------------------------------------------
+create table public.store_members (
+    id uuid default gen_random_uuid() primary key,
+    store_id uuid references public.stores(id) on delete cascade not null,
+    user_id uuid references public.profiles(id) on delete cascade, -- Enlazado automáticamente al registrarse
+    email text not null,                         -- Correo del colaborador invitado
+    role text default 'editor' not null,         -- Permisos: 'admin' (total), 'editor' (inventario/envíos), 'viewer' (lectura)
+    status text default 'pending' not null,     -- Estado: 'pending' (invitación enviada), 'active' (acceso activo)
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+
+    constraint store_member_role_values check (role in ('admin', 'editor', 'viewer')),
+    constraint store_member_status_values check (status in ('pending', 'active')),
+    unique(store_id, email)
+);
+
+create index idx_store_members_store_id on public.store_members(store_id);
+create index idx_store_members_user_id on public.store_members(user_id) where user_id is not null;
+create index idx_store_members_email on public.store_members(email);
+
+create trigger trigger_store_members_updated_at
+    before update on public.store_members
+    for each row execute function public.handle_updated_at();
+
+-- ----------------------------------------------------
 -- 3. TABLA: CATEGORIES
 -- ----------------------------------------------------
 create table public.categories (
@@ -391,6 +417,7 @@ create index idx_order_items_order_id on public.order_items(order_id);
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
+    -- 1. Insertar el perfil público del nuevo usuario
     insert into public.profiles (id, full_name, avatar_url, role)
     values (
         new.id,
@@ -402,6 +429,13 @@ begin
         new.raw_user_meta_data->>'avatar_url',
         'user'
     );
+
+    -- 2. Vincular invitaciones de colaboración pendientes al nuevo usuario
+    update public.store_members
+    set user_id = new.id,
+        status = 'active'
+    where email = new.email and status = 'pending';
+
     return new;
 end;
 $$ language plpgsql security definer;
@@ -412,6 +446,41 @@ create trigger on_auth_user_created
     for each row execute function public.handle_new_user();
 
 -- ----------------------------------------------------
+-- FUNCIONES HELPER PARA RLS (Aislamiento de Colaboradores)
+-- ----------------------------------------------------
+-- Función segura para verificar si el usuario es dueño o colaborador con un rol requerido
+create or replace function public.is_store_collaborator(store_id uuid, required_role text default 'viewer')
+returns boolean as $$
+declare
+    user_email text;
+begin
+    -- Obtener el email del usuario autenticado
+    user_email := auth.email();
+
+    return (
+        -- Caso 1: El usuario es el dueño directo de la tienda
+        exists (
+            select 1 from public.stores 
+            where id = store_id and owner_id = auth.uid()
+        )
+        or
+        -- Caso 2: El usuario es un colaborador activo con permisos suficientes
+        exists (
+            select 1 from public.store_members
+            where store_members.store_id = is_store_collaborator.store_id 
+              and store_members.email = user_email
+              and store_members.status = 'active'
+              and (
+                required_role = 'viewer'
+                or (required_role = 'editor' and store_members.role in ('admin', 'editor'))
+                or (required_role = 'admin' and store_members.role = 'admin')
+              )
+        )
+    );
+end;
+$$ language plpgsql security definer;
+
+-- ----------------------------------------------------
 -- POLÍTICAS DE SEGURIDAD (RLS) NATIVAS EN SUPABASE
 -- ----------------------------------------------------
 
@@ -419,6 +488,7 @@ create trigger on_auth_user_created
 alter table public.profiles enable row level security;
 alter table public.plans enable row level security;
 alter table public.stores enable row level security;
+alter table public.store_members enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.product_options enable row level security;
@@ -427,7 +497,7 @@ alter table public.shipping_rules enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 
--- Políticas para Profiles
+-- Políticas para Profiles (Perfiles de usuario)
 create policy "Los usuarios pueden ver su propio perfil" on public.profiles
     for select using (auth.uid() = id);
 
@@ -450,8 +520,18 @@ create policy "Solo los super admins pueden gestionar planes" on public.plans
 create policy "Cualquiera puede leer tiendas activas" on public.stores
     for select using (is_active = true);
 
-create policy "Los dueños pueden gestionar su propia tienda" on public.stores
-    for all using (auth.uid() = owner_id);
+create policy "Los dueños o colaboradores admin pueden actualizar la tienda" on public.stores
+    for update using (public.is_store_collaborator(id, 'admin'));
+
+create policy "Los dueños pueden eliminar su tienda" on public.stores
+    for delete using (auth.uid() = owner_id);
+
+-- Políticas para Store Members (Gestión de Colaboradores)
+create policy "Los dueños o admins de la tienda pueden gestionar miembros" on public.store_members
+    for all using (public.is_store_collaborator(store_id, 'admin'));
+
+create policy "Los miembros activos de la tienda pueden ver los colaboradores" on public.store_members
+    for select using (public.is_store_collaborator(store_id, 'viewer'));
 
 -- Políticas para Categories
 create policy "Cualquiera puede ver categorias de tiendas activas" on public.categories
@@ -459,16 +539,11 @@ create policy "Cualquiera puede ver categorias de tiendas activas" on public.cat
         exists (
             select 1 from public.stores 
             where stores.id = categories.store_id and stores.is_active = true
-        )
+        ) or public.is_store_collaborator(store_id, 'viewer')
     );
 
-create policy "Los dueños pueden gestionar categorias de su tienda" on public.categories
-    for all using (
-        exists (
-            select 1 from public.stores 
-            where stores.id = categories.store_id and stores.owner_id = auth.uid()
-        )
-    );
+create policy "Los dueños o editores pueden gestionar categorias" on public.categories
+    for all using (public.is_store_collaborator(store_id, 'editor'));
 
 -- Políticas para Products
 create policy "Cualquiera puede ver productos de tiendas activas" on public.products
@@ -476,16 +551,11 @@ create policy "Cualquiera puede ver productos de tiendas activas" on public.prod
         exists (
             select 1 from public.stores 
             where stores.id = products.store_id and stores.is_active = true
-        )
+        ) or public.is_store_collaborator(store_id, 'viewer')
     );
 
-create policy "Los dueños pueden gestionar productos de su tienda" on public.products
-    for all using (
-        exists (
-            select 1 from public.stores 
-            where stores.id = products.store_id and stores.owner_id = auth.uid()
-        )
-    );
+create policy "Los dueños o editores pueden gestionar productos" on public.products
+    for all using (public.is_store_collaborator(store_id, 'editor'));
 
 -- Políticas para Product Options (Variantes)
 create policy "Cualquiera puede ver opciones de productos activos" on public.product_options
@@ -494,15 +564,17 @@ create policy "Cualquiera puede ver opciones de productos activos" on public.pro
             select 1 from public.products
             join public.stores on stores.id = products.store_id
             where products.id = product_options.product_id and stores.is_active = true
+        ) or exists (
+            select 1 from public.products
+            where products.id = product_options.product_id and public.is_store_collaborator(products.store_id, 'viewer')
         )
     );
 
-create policy "Los dueños pueden gestionar opciones de productos" on public.product_options
+create policy "Los dueños o editores pueden gestionar opciones" on public.product_options
     for all using (
         exists (
             select 1 from public.products
-            join public.stores on stores.id = products.store_id
-            where products.id = product_options.product_id and stores.owner_id = auth.uid()
+            where products.id = product_options.product_id and public.is_store_collaborator(products.store_id, 'editor')
         )
     );
 
@@ -514,16 +586,19 @@ create policy "Cualquiera puede ver valores de opciones de productos activos" on
             join public.products on products.id = product_options.product_id
             join public.stores on stores.id = products.store_id
             where product_options.id = product_option_values.option_id and stores.is_active = true
+        ) or exists (
+            select 1 from public.product_options
+            join public.products on products.id = product_options.product_id
+            where product_options.id = product_option_values.option_id and public.is_store_collaborator(products.store_id, 'viewer')
         )
     );
 
-create policy "Los dueños pueden gestionar valores de opciones de productos" on public.product_option_values
+create policy "Los dueños o editores pueden gestionar valores de opciones" on public.product_option_values
     for all using (
         exists (
             select 1 from public.product_options
             join public.products on products.id = product_options.product_id
-            join public.stores on stores.id = products.store_id
-            where product_options.id = product_option_values.option_id and stores.owner_id = auth.uid()
+            where product_options.id = product_option_values.option_id and public.is_store_collaborator(products.store_id, 'editor')
         )
     );
 
@@ -533,39 +608,31 @@ create policy "Cualquiera puede ver reglas de envio de tiendas activas" on publi
         exists (
             select 1 from public.stores 
             where stores.id = shipping_rules.store_id and stores.is_active = true
-        )
+        ) or public.is_store_collaborator(store_id, 'viewer')
     );
 
-create policy "Los dueños pueden gestionar reglas de envio de su tienda" on public.shipping_rules
-    for all using (
-        exists (
-            select 1 from public.stores 
-            where stores.id = shipping_rules.store_id and stores.owner_id = auth.uid()
-        )
-    );
+create policy "Los dueños o editores pueden gestionar reglas de envio" on public.shipping_rules
+    for all using (public.is_store_collaborator(store_id, 'editor'));
 
 -- Políticas para Orders
 create policy "Los compradores pueden crear pedidos" on public.orders
     for insert with check (true);
 
-create policy "Los dueños pueden ver los pedidos de su tienda" on public.orders
-    for select using (
-        exists (
-            select 1 from public.stores 
-            where stores.id = orders.store_id and stores.owner_id = auth.uid()
-        )
-    );
+create policy "Los dueños o colaboradores autorizados pueden ver pedidos" on public.orders
+    for select using (public.is_store_collaborator(store_id, 'viewer'));
+
+create policy "Los dueños o editores pueden actualizar el estado del pedido" on public.orders
+    for update using (public.is_store_collaborator(store_id, 'editor'));
 
 -- Políticas para Order Items
 create policy "Los compradores pueden registrar items de pedido" on public.order_items
     for insert with check (true);
 
-create policy "Los dueños pueden ver items de pedidos de su tienda" on public.order_items
+create policy "Los dueños o colaboradores autorizados pueden ver items de pedidos" on public.order_items
     for select using (
         exists (
             select 1 from public.orders
-            join public.stores on stores.id = orders.store_id
-            where orders.id = order_items.order_id and stores.owner_id = auth.uid()
+            where orders.id = order_items.order_id and public.is_store_collaborator(orders.store_id, 'viewer')
         )
     );
 ```
@@ -655,6 +722,13 @@ El panel del vendedor (`app.tuplataforma.com`) estará estructurado en **5 secci
 *   **Diseño Estético:** 
     *   Selector de plantilla activa (`template_name` de `stores`).
     *   Paleta de colores (color primario, secundario, de fondo) y fuentes tipográficas validadas en el JSON `theme_settings`, que alimentan las variables CSS del catálogo final.
+*   **Gestión de Colaboradores (Equipo):**
+    *   **Panel de Invitaciones:** Formulario para enviar invitaciones de colaboración ingresando un correo electrónico y seleccionando el rol.
+    *   **Matriz de Permisos por Rol:**
+        *   **Administrador (`admin`):** Acceso completo al panel, incluyendo configuraciones críticas de tienda (Slug, WhatsApp, plantillas), facturación y capacidad para invitar, editar o revocar colaboradores de la tabla `store_members`.
+        *   **Editor (`editor`):** Permiso para gestionar el catálogo (productos, categorías, variantes), editar tarifas de envío (`shipping_rules`) y modificar estados de pedidos (`status` en `orders`). Bloqueado para configuraciones globales de la tienda e invitaciones.
+        *   **Lector (`viewer`):** Acceso 100% de solo lectura para monitoreo de ventas, métricas y pedidos. Bloqueado para cualquier acción de creación, modificación o eliminación.
+    *   **Bandeja de Miembros:** Lista visual que muestra los correos invitados, su estado (`pending` / `active`) y opción de eliminación/revocación de acceso reservada para administradores y dueños.
 
 ---
 
