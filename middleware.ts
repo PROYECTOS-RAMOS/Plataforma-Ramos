@@ -49,6 +49,11 @@ export async function middleware(request: NextRequest) {
     tenantDomain = hostname.replace('.' + rootDomainName, '')
   }
 
+  // Si la ruta ya empieza con el dominio del inquilino (evitar bucle de reescritura en pasadas secundarias de Next.js)
+  if (path.startsWith(`/${tenantDomain}`)) {
+    return supabaseResponse
+  }
+
   // Reescribir dinámicamente hacia la carpeta dinámica de inquilinos
   return NextResponse.rewrite(new URL(`/${tenantDomain}${path}`, request.url))
 }
