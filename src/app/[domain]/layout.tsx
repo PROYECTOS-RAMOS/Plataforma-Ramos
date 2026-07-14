@@ -38,10 +38,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
       style={themeStyles} 
       className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[var(--tenant-primary)] selection:text-white"
     >
-      {/* Contenedor del catálogo móvil */}
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto bg-white min-h-screen shadow-lg border-x border-slate-100 relative">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }

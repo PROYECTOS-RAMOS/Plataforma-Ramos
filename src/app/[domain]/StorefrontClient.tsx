@@ -352,7 +352,7 @@ export default function StorefrontClient({ store, categories, products, shipping
     <div className="flex-1 flex flex-col min-h-screen">
       
       {/* 1. DISEÑO MÓVIL (VERSIÓN STITCH) */}
-      <div className="md:hidden flex-1 flex flex-col min-h-screen pb-20">
+      <div className="md:hidden flex-1 flex flex-col w-full max-w-md mx-auto bg-white min-h-screen shadow-lg border-x border-slate-100 relative pb-20">
         {/* HEADER TIENDA */}
         <header className="p-6 text-center space-y-3 bg-slate-50 border-b border-slate-100 flex flex-col items-center">
           <div className="w-14 h-14 rounded-full bg-[var(--tenant-primary)] text-white flex items-center justify-center font-black text-xl shadow-md border-2 border-white">
