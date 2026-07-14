@@ -3,16 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  DollarSign, 
-  MessageSquare, 
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  ExternalLink
-} from 'lucide-react'
 
 interface Order {
   id: string
@@ -46,7 +36,6 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
   const [pendingOrders, setPendingOrders] = useState<Order[]>(initialMetrics.pendingOrders)
   const supabase = createClient()
 
-  // Función para reproducir tono de alerta de venta (Bell sound)
   const playAlertSound = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -54,8 +43,8 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
       const gain = audioCtx.createGain()
 
       osc.type = 'sine'
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime) // Re5
-      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15) // La5
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15)
 
       gain.gain.setValueAtTime(0.35, audioCtx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6)
@@ -70,7 +59,6 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
     }
   }
 
-  // Configuración de Supabase Realtime
   useEffect(() => {
     const channel = supabase
       .channel(`realtime-orders-${store.id}`)
@@ -84,14 +72,8 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
         },
         (payload) => {
           const newOrder = payload.new as Order
-          
-          // Reproducir alerta auditiva y toast
           playAlertSound()
-
-          // Agregar al listado de pendientes
           setPendingOrders((prev) => [newOrder, ...prev].slice(0, 5))
-
-          // Recalcular métricas
           setMetrics((prev) => ({
             ...prev,
             totalOrders: prev.totalOrders + 1,
@@ -112,10 +94,7 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
       .eq('id', orderId)
 
     if (!error) {
-      // Remover de la vista de pendientes locales
       setPendingOrders((prev) => prev.filter((order) => order.id !== orderId))
-      
-      // Si se completó, recalcular volumen de ventas
       if (nextStatus === 'completed') {
         const orderValue = pendingOrders.find((o) => o.id === orderId)?.total || 0
         setMetrics((prev) => ({
@@ -126,7 +105,6 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
     }
   }
 
-  // Formatear precios
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-US', {
       style: 'currency',
@@ -134,183 +112,195 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
     }).format(amount)
   }
 
-  // Ticket promedio
   const ticketAverage = metrics.totalOrders > 0 
     ? metrics.totalSales / metrics.totalOrders 
     : 0
 
-  // Barra de progreso del plan
   const planPercentage = Math.min((planLimits.currentProducts / planLimits.maxProducts) * 100, 100)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-body-base text-on-surface">
       {/* Cabecera del Dashboard */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Panel de Control</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Monitoreo en vivo de ventas e inventario para la tienda <span className="font-semibold text-slate-900">{store.name}</span>
+          <h2 className="text-3xl font-bold tracking-tight text-admin-deep-blue">Visión General</h2>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Monitoriza en vivo el rendimiento de tu tienda <span className="font-semibold text-primary">{store.name}</span>
           </p>
         </div>
-        <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2">
+        <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Conectado en Vivo</span>
+          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Conectado en Vivo</span>
         </div>
       </div>
 
-      {/* Tarjetas KPI de Métricas */}
+      {/* Tarjetas KPI Bento Grid (Diseño de Stitch) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Ventas */}
-        <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ventas Completadas</span>
-            <div className="text-3xl font-black text-slate-900">{formatCurrency(metrics.totalSales)}</div>
+        <div className="bg-surface border border-border-subtle rounded-lg p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ventas Totales</span>
+            <div className="p-2 bg-secondary-container/10 text-secondary rounded-full flex">
+              <span className="material-symbols-outlined text-[20px]">payments</span>
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-            <DollarSign className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Cantidad Pedidos */}
-        <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pedidos Totales</span>
-            <div className="text-3xl font-black text-slate-900">{metrics.totalOrders}</div>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-            <ShoppingBag className="w-6 h-6" />
+          <div>
+            <span className="text-3xl font-bold tracking-tight text-admin-deep-blue">{formatCurrency(metrics.totalSales)}</span>
+            <p className="text-xs text-status-completed flex items-center mt-2 font-semibold">
+              <span className="material-symbols-outlined text-[16px] mr-1">trending_up</span>
+              +15% vs mes anterior
+            </p>
           </div>
         </div>
 
-        {/* Ticket Promedio */}
-        <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ticket Promedio</span>
-            <div className="text-3xl font-black text-slate-900">{formatCurrency(ticketAverage)}</div>
+        {/* Pedidos */}
+        <div className="bg-surface border border-border-subtle rounded-lg p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Pedidos Nuevos</span>
+            <div className="p-2 bg-secondary-container/10 text-secondary rounded-full flex">
+              <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-600">
-            <TrendingUp className="w-6 h-6" />
+          <div>
+            <span className="text-3xl font-bold tracking-tight text-admin-deep-blue">{metrics.totalOrders}</span>
+            <p className="text-xs text-status-completed flex items-center mt-2 font-semibold">
+              <span className="material-symbols-outlined text-[16px] mr-1">trending_up</span>
+              +5% vs mes anterior
+            </p>
+          </div>
+        </div>
+
+        {/* Conversión */}
+        <div className="bg-surface border border-border-subtle rounded-lg p-6 flex flex-col justify-between h-40">
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket Promedio</span>
+            <div className="p-2 bg-secondary-container/10 text-secondary rounded-full flex">
+              <span className="material-symbols-outlined text-[20px]">analytics</span>
+            </div>
+          </div>
+          <div>
+            <span className="text-3xl font-bold tracking-tight text-admin-deep-blue">{formatCurrency(ticketAverage)}</span>
+            <p className="text-xs text-status-canceled flex items-center mt-2 font-semibold">
+              <span className="material-symbols-outlined text-[16px] mr-1">trending_down</span>
+              -0.5% vs mes anterior
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Grid de Estado de Plan y Pedidos Urgentes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Gráfico y Pedidos Urgentes Split (Diseño de Stitch) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Pedidos Urgentes (Pendientes) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">Pedidos Urgentes</h3>
-              <p className="text-xs text-slate-500">Pedidos pendientes de confirmación y envío a WhatsApp</p>
+        {/* Gráfico de Ventas Semanales */}
+        <div className="lg:col-span-2 bg-surface border border-border-subtle rounded-lg p-6 flex flex-col h-[400px] justify-between">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-admin-deep-blue">Ventas Semanales</h3>
+            <select className="bg-surface-container-low border border-border-subtle rounded px-3 py-1 text-xs text-on-surface-variant focus:outline-none">
+              <option>Esta semana</option>
+              <option>Semana pasada</option>
+            </select>
+          </div>
+          {/* Gráfico simulado */}
+          <div className="flex-1 bg-surface-container-lowest border border-border-subtle border-dashed rounded flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 flex items-end justify-around px-4 pb-4 opacity-50">
+              <div className="w-12 bg-secondary/20 rounded-t h-[40%]"></div>
+              <div className="w-12 bg-secondary/40 rounded-t h-[70%]"></div>
+              <div className="w-12 bg-secondary/30 rounded-t h-[50%]"></div>
+              <div className="w-12 bg-secondary/80 rounded-t h-[90%]"></div>
+              <div className="w-12 bg-secondary/50 rounded-t h-[60%]"></div>
+              <div className="w-12 bg-secondary/20 rounded-t h-[30%]"></div>
+              <div className="w-12 bg-secondary/60 rounded-t h-[80%]"></div>
             </div>
-            <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-full text-xs font-bold uppercase">
-              {pendingOrders.length} por despachar
+            <span className="text-xs text-on-surface-variant z-10 bg-surface px-4 py-2 rounded shadow-sm border border-border-subtle font-bold">
+              Gráfico en Tiempo Real
+            </span>
+          </div>
+        </div>
+
+        {/* Pedidos Urgentes / Recientes */}
+        <div className="lg:col-span-1 bg-surface border border-border-subtle rounded-lg flex flex-col h-[400px]">
+          <div className="p-6 border-b border-border-subtle flex justify-between items-center">
+            <h3 className="text-lg font-bold text-admin-deep-blue">Pedidos Urgentes</h3>
+            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded text-[9px] font-bold uppercase">
+              {pendingOrders.length} pendientes
             </span>
           </div>
 
-          {pendingOrders.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-slate-100 rounded-lg flex flex-col items-center justify-center text-slate-400">
-              <CheckCircle className="w-12 h-12 text-slate-200 mb-2" />
-              <div className="font-bold text-sm text-slate-700">¡Al día!</div>
-              <p className="text-xs text-slate-500 mt-1">No tienes pedidos pendientes de atención.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {pendingOrders.map((order) => {
-                const whatsappMessage = `Hola ${order.customer_name}, he visto tu pedido por un valor de ${formatCurrency(order.total)}. ¿Coordinamos la entrega?`
+          <div className="flex-1 overflow-y-auto divide-y divide-border-subtle">
+            {pendingOrders.length === 0 ? (
+              <div className="text-center py-16 text-slate-400 flex flex-col items-center justify-center h-full">
+                <span className="material-symbols-outlined text-[40px] text-slate-200 mb-2">task_alt</span>
+                <div className="font-bold text-xs text-slate-700">¡Todo al día!</div>
+                <p className="text-[10px] text-slate-500 mt-1">No hay pedidos por atender.</p>
+              </div>
+            ) : (
+              pendingOrders.map((order, index) => {
+                const whatsappMessage = `Hola ${order.customer_name}, coordinemos los detalles de tu pedido de ${formatCurrency(order.total)}.`
                 const whatsappLink = `https://api.whatsapp.com/send?phone=${order.customer_phone.replace('+', '')}&text=${encodeURIComponent(whatsappMessage)}`
                 return (
-                  <div key={order.id} className="py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 first:pt-0 last:pb-0">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-sm">{order.customer_name}</span>
-                        <span className="text-xs text-slate-400">#{order.id.slice(0, 8)}</span>
+                  <div 
+                    key={order.id} 
+                    className={`p-4 flex justify-between items-center hover:bg-surface-container-lowest transition-colors ${
+                      index % 2 === 1 ? 'bg-[#F8FAFC]' : ''
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-admin-deep-blue">{order.customer_name}</p>
+                        <span className="text-[9px] font-mono text-slate-400">#{order.id.slice(0, 5)}</span>
                       </div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                        <span>Tel: {order.customer_phone}</span>
-                        <span>•</span>
-                        <span className="font-semibold text-slate-900">{formatCurrency(order.total)}</span>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <a 
+                          href={whatsappLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-bold hover:underline"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">chat</span>
+                          <span>WhatsApp</span>
+                        </a>
+                        <span className="text-slate-300">|</span>
+                        <button 
+                          onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
+                          className="text-[10px] text-secondary font-bold hover:underline"
+                        >
+                          Despachar
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 w-full md:w-auto">
-                      <a 
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                      
-                      <Button
-                        onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
-                        variant="outline"
-                        className="flex-1 md:flex-initial text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-bold gap-1"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Despachar</span>
-                      </Button>
-
-                      <Button
-                        onClick={() => handleUpdateOrderStatus(order.id, 'canceled')}
-                        variant="ghost"
-                        className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600"
-                        title="Cancelar Pedido"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-xs text-primary mb-1">{formatCurrency(order.total)}</span>
+                      <span className="px-2 py-0.5 rounded bg-status-pending/10 text-status-pending font-bold text-[9px] uppercase tracking-wider border border-status-pending/20">
+                        Pendiente
+                      </span>
                     </div>
                   </div>
                 )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Consumo y Estado del Plan */}
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-6 flex flex-col justify-between">
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">Estado de la cuenta</h3>
-              <p className="text-xs text-slate-500">Monitoreo de recursos y límites</p>
-            </div>
-
-            <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-2">
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Plan Activo</span>
-              <div className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
-                <span>{planLimits.planName}</span>
-              </div>
-            </div>
-
-            {/* Consumo de Productos */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-medium text-slate-500">Productos creados</span>
-                <span className="font-bold text-slate-900">{planLimits.currentProducts} de {planLimits.maxProducts}</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    planPercentage > 85 ? 'bg-red-500' : planPercentage > 50 ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${planPercentage}%` }}
-                />
-              </div>
-              <div className="text-[10px] text-slate-400">
-                {planPercentage === 100 
-                  ? 'Has alcanzado el límite de tu plan. Actualiza para crear más productos.'
-                  : `Te quedan ${planLimits.maxProducts - planLimits.currentProducts} ranuras de productos disponibles.`}
-              </div>
-            </div>
+              })
+            )}
           </div>
+        </div>
+      </div>
 
-          <div className="pt-6 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-400">
-            <AlertCircle className="w-4 h-4 text-slate-300 flex-shrink-0" />
-            <span>Los límites de productos se actualizan automáticamente al guardar o borrar ítems.</span>
+      {/* Caja de consumo del Plan (Filtro base) */}
+      <div className="bg-surface border border-border-subtle rounded-lg p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="space-y-1">
+          <h4 className="text-sm font-bold text-admin-deep-blue">Consumo de Plan - {planLimits.planName}</h4>
+          <p className="text-xs text-on-surface-variant">Límite de productos activos en tu tienda.</p>
+        </div>
+        <div className="flex items-center gap-4 w-full md:max-w-md">
+          <div className="flex-1">
+            <div className="flex justify-between text-[10px] mb-1 font-bold text-slate-500">
+              <span>PRODUCTOS</span>
+              <span>{planLimits.currentProducts} / {planLimits.maxProducts}</span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-secondary rounded-full transition-all" 
+                style={{ width: `${planPercentage}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>

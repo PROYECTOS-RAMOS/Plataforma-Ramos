@@ -3,18 +3,6 @@
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import {
-  Store,
-  FileText,
-  CreditCard,
-  Truck,
-  Users,
-  Settings,
-  Check,
-  Plus,
-  Trash2,
-  AlertCircle
-} from 'lucide-react'
 
 interface Member {
   id: string
@@ -57,7 +45,7 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
   const [storePhone, setStorePhone] = useState(store.whatsapp_phone)
   const [showDecimals, setShowDecimals] = useState(store.show_decimals)
   const [showCanceledOrders, setShowCanceledOrders] = useState(store.show_canceled_orders)
-  const [primaryColor, setPrimaryColor] = useState(store.theme_settings?.primaryColor || '#0F172A')
+  const [primaryColor, setPrimaryColor] = useState(store.theme_settings?.primaryColor || '#3B82F6')
 
   // 2. Estados Pedidos y Ventas
   const [collectSalesTax, setCollectSalesTax] = useState(store.collect_sales_tax)
@@ -98,39 +86,38 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
     setSuccessMsg(null)
     setErrorMsg(null)
 
-    // Formatear estados JSON correspondientes
-    const updatedTheme = { ...store.theme_settings, primaryColor }
-    const updatedReceipt = {
-      header_text: receiptHeader.trim(),
-      footer_text: receiptFooter.trim(),
-      receipt_notes: receiptNotes.trim(),
-      show_customer_info: showCustInfo,
-      show_product_code: showProdCode
-    }
-    const updatedPayments = {
-      allow_pay_later: allowPayLater,
-      store_credit_enabled: storeCreditEnabled
-    }
-    const updatedDelivery = {
-      allow_pickup: allowPickup,
-      allow_delivery: allowDelivery
-    }
+    // Validar slug
+    const finalSlug = storeSlug.trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
 
     const { error } = await supabase
       .from('stores')
       .update({
         name: storeName.trim(),
-        slug: storeSlug.trim(),
+        slug: finalSlug,
         whatsapp_phone: storePhone.trim(),
         show_decimals: showDecimals,
         show_canceled_orders: showCanceledOrders,
+        theme_settings: { primaryColor },
         collect_sales_tax: collectSalesTax,
         sales_tax_rate: parseFloat(salesTaxRate) || 0,
         custom_order_statuses: orderStatuses,
-        theme_settings: updatedTheme,
-        receipt_settings: updatedReceipt,
-        payment_settings: updatedPayments,
-        delivery_settings: updatedDelivery
+        receipt_settings: {
+          header_text: receiptHeader.trim(),
+          footer_text: receiptFooter.trim(),
+          receipt_notes: receiptNotes.trim(),
+          show_customer_info: showCustInfo,
+          show_product_code: showProdCode,
+        },
+        payment_settings: {
+          allow_pay_later: allowPayLater,
+          store_credit_enabled: storeCreditEnabled,
+        },
+        delivery_settings: {
+          allow_pickup: allowPickup,
+          allow_delivery: allowDelivery,
+        }
       })
       .eq('id', store.id)
 
@@ -138,15 +125,9 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
       setErrorMsg(error.message)
     } else {
       setSuccessMsg('Ajustes guardados con éxito.')
+      setStoreSlug(finalSlug)
     }
     setSaving(false)
-  }
-
-  // Activar/desactivar estado de pedido
-  const handleToggleStatus = (statusId: string) => {
-    setOrderStatuses((prev) => 
-      prev.map((s) => s.id === statusId ? { ...s, enabled: !s.enabled } : s)
-    )
   }
 
   // Invitar miembro al equipo
@@ -193,53 +174,55 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
   }
 
   return (
-    <div className="space-y-6">
-      {/* Cabecera */}
+    <div className="space-y-6 font-body-base text-on-surface">
+      {/* Cabecera (Diseño de Stitch) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Ajustes del Negocio</h1>
-          <p className="text-sm text-slate-500 mt-1">Configura los parámetros estéticos, fiscales, de facturación y equipo.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Ajustes del Negocio</h2>
+          <p className="text-sm text-on-surface-variant mt-1">Configura los parámetros estéticos, fiscales, de facturación y equipo.</p>
         </div>
 
-        {/* Botón de Guardado Unificado (Visible si no es la pestaña de Equipo) */}
+        {/* Guardado */}
         {activeSubTab !== 'team' && (
-          <Button
+          <button
             onClick={handleSaveSettings}
             disabled={saving || !isUserAdmin}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5 h-10 px-6"
+            className="px-5 py-2.5 bg-admin-deep-blue text-on-primary rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm disabled:opacity-50"
           >
-            <Check className="w-4 h-4" />
+            <span className="material-symbols-outlined text-[18px]">check</span>
             <span>{saving ? 'Guardando...' : 'Guardar Ajustes'}</span>
-          </Button>
+          </button>
         )}
       </div>
 
       {/* Alertas */}
       {successMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 text-xs font-semibold">
-          {successMsg}
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-xs font-bold flex items-center gap-2">
+          <span className="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
+          <span>{successMsg}</span>
         </div>
       )}
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-semibold">
-          {errorMsg}
+        <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-bold flex items-center gap-2">
+          <span className="material-symbols-outlined text-red-600 text-[18px]">error</span>
+          <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Grid de Pestañas y Formulario */}
+      {/* Grid de Pestañas y Formulario (Diseño de Stitch) */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         {/* Sidebar de Ajustes */}
-        <div className="bg-white border border-slate-100 rounded-xl shadow-sm p-3 h-fit flex flex-col space-y-1">
+        <div className="bg-white border border-border-subtle rounded-xl p-3 h-fit flex flex-col space-y-1 shadow-sm">
           {[
-            { id: 'general', label: 'General', icon: Store },
-            { id: 'sales', label: 'Pedidos y Ventas', icon: Settings },
-            { id: 'receipt', label: 'Impresión de Recibo', icon: FileText },
-            { id: 'payments', label: 'Métodos de Pago', icon: CreditCard },
-            { id: 'delivery', label: 'Entrega y Recogida', icon: Truck },
-            { id: 'team', label: 'Equipo y Permisos', icon: Users },
+            { id: 'general', label: 'General', icon: 'store' },
+            { id: 'sales', label: 'Pedidos y Ventas', icon: 'receipt_long' },
+            { id: 'receipt', label: 'Impresión de Recibo', icon: 'print' },
+            { id: 'payments', label: 'Métodos de Pago', icon: 'payments' },
+            { id: 'delivery', label: 'Entrega y Recogida', icon: 'local_shipping' },
+            { id: 'team', label: 'Equipo y Permisos', icon: 'group' },
           ].map((tab) => {
-            const Icon = tab.icon
+            const active = activeSubTab === tab.id
             return (
               <button
                 key={tab.id}
@@ -248,13 +231,13 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
                   setSuccessMsg(null)
                   setErrorMsg(null)
                 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-colors ${
-                  activeSubTab === tab.id
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
+                  active
+                    ? 'text-secondary bg-secondary-container/10 font-bold opacity-90'
+                    : 'text-on-surface-variant hover:bg-slate-50'
                 }`}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             )
@@ -262,478 +245,387 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
         </div>
 
         {/* Formulario / Configuración de la Pestaña */}
-        <div className="lg:col-span-3 bg-white border border-slate-100 rounded-xl shadow-sm p-6 lg:p-8">
+        <div className="lg:col-span-3 bg-white border border-border-subtle rounded-xl shadow-sm p-6 lg:p-8">
           
-          {/* 1. AJUSTES GENERALES */}
+          {/* 1. AJUSTES GENERALES (Diseño: ajustes_de_tienda_refinado) */}
           {activeSubTab === 'general' && (
             <div className="space-y-6">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">Identificación y Aspecto</h3>
-                <p className="text-xs text-slate-500">Datos públicos de cara a tus clientes en el catálogo.</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">Datos públicos de tu comercio e identidad de marca.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre del Negocio</label>
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Nombre del Negocio</label>
                   <input
                     type="text"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium"
                     disabled={!isUserAdmin}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Slug de la Tienda (URL)</label>
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Slug de la Tienda (URL pública)</label>
                   <input
                     type="text"
                     value={storeSlug}
                     onChange={(e) => setStoreSlug(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm font-mono text-xs bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-mono font-medium bg-slate-50"
                     disabled={!isUserAdmin}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">WhatsApp de contacto (Formato E.164)</label>
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">WhatsApp de contacto (E.164)</label>
                   <input
                     type="text"
                     value={storePhone}
                     onChange={(e) => setStorePhone(e.target.value)}
                     placeholder="+5491122334455"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium"
                     disabled={!isUserAdmin}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Color de Marca (Botones/Destacados)</label>
-                  <div className="flex gap-2 items-center">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Color Primario de Tienda</label>
+                  <div className="flex gap-3 items-center">
                     <input
                       type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-10 h-10 border border-slate-200 rounded cursor-pointer p-0"
+                      className="w-10 h-10 border border-slate-200 rounded cursor-pointer p-0 bg-transparent"
                       disabled={!isUserAdmin}
                     />
                     <input
                       type="text"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm font-mono text-xs max-w-[120px]"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-mono font-medium"
                       disabled={!isUserAdmin}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-6 space-y-4">
-                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Visualización y Números</h4>
-                
-                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Mostrar Decimales en Precios</span>
-                    <p className="text-xs text-slate-500">Permite ver centavos. Desactívalo si usas monedas enteras (CLP, COP).</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={showDecimals}
-                    onChange={(e) => setShowDecimals(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                    disabled={!isUserAdmin}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Visualización de Pedidos Cancelados</span>
-                    <p className="text-xs text-slate-500">Muestra los pedidos anulados tachados o escóndelos del historial.</p>
-                  </div>
-                  <select
-                    value={showCanceledOrders}
-                    onChange={(e) => setShowCanceledOrders(e.target.value)}
-                    className="px-3 py-1.5 border border-slate-200 rounded-md text-xs font-semibold bg-white"
-                    disabled={!isUserAdmin}
-                  >
-                    <option value="strikethrough">Mostrar tachados</option>
-                    <option value="hide">Esconder totalmente</option>
-                  </select>
+              <div className="pt-6 border-t border-border-subtle space-y-4">
+                <h4 className="font-bold text-slate-900 text-sm">Visualización del Catálogo</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={showDecimals}
+                      onChange={(e) => setShowDecimals(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Mostrar decimales en los precios (Ej. $10.50 en lugar de $11)</span>
+                  </label>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 2. AJUSTES PEDIDOS Y VENTAS */}
+          {/* 2. PEDIDOS Y VENTAS (Diseño: ajustes_pedidos_y_ventas_refinado) */}
           {activeSubTab === 'sales' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Pedidos, Ventas e Impuestos</h3>
-                <p className="text-xs text-slate-500">Configura la facturación fiscal y activa estados personalizados.</p>
-              </div>
-
-              <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Cobrar impuestos a ventas</span>
-                    <p className="text-xs text-slate-500">Suma de forma automática la alícuota sobre el subtotal.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={collectSalesTax}
-                    onChange={(e) => setCollectSalesTax(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900"
-                    disabled={!isUserAdmin}
-                  />
-                </div>
-
-                {collectSalesTax && (
-                  <div className="max-w-[200px] space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Tasa de Impuesto (%)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={salesTaxRate}
-                      onChange={(e) => setSalesTaxRate(e.target.value)}
-                      placeholder="19.00"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Matriz de Estados de Pedido</h4>
-                <p className="text-xs text-slate-500">Desactiva los estados que no uses en tu logística diaria:</p>
-
-                <div className="border border-slate-100 rounded-xl divide-y divide-slate-100">
-                  {orderStatuses.map((status) => (
-                    <div key={status.id} className="p-3 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-800">{status.label}</span>
-                      <input
-                        type="checkbox"
-                        checked={status.enabled}
-                        onChange={() => handleToggleStatus(status.id)}
-                        className="rounded border-slate-300 text-slate-900"
-                        disabled={!isUserAdmin}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 3. IMPRESIÓN DE RECIBO & SIMULADOR EN VIVO */}
-          {activeSubTab === 'receipt' && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              
-              {/* Formulario */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">Ticket de Compra</h3>
-                  <p className="text-xs text-slate-500">Encabezado y pie de ticket para el comprobante en PDF e impresión física.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Texto del Encabezado</label>
-                    <textarea
-                      value={receiptHeader}
-                      onChange={(e) => setReceiptHeader(e.target.value)}
-                      placeholder="Ej. ¡Gracias por elegirnos! Nit: 12345"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
-                      rows={2}
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Texto del Pie de Recibo</label>
-                    <textarea
-                      value={receiptFooter}
-                      onChange={(e) => setReceiptFooter(e.target.value)}
-                      placeholder="Ej. Conserve este ticket para devoluciones."
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
-                      rows={2}
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Notas Internas / Condiciones</label>
-                    <textarea
-                      value={receiptNotes}
-                      onChange={(e) => setReceiptNotes(e.target.value)}
-                      placeholder="Condiciones comerciales en letra chica."
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
-                      rows={2}
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                    <span className="text-xs font-bold text-slate-700">Imprimir información de Cliente</span>
-                    <input
-                      type="checkbox"
-                      checked={showCustInfo}
-                      onChange={(e) => setShowCustInfo(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900"
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                    <span className="text-xs font-bold text-slate-700">Imprimir códigos internos de producto</span>
-                    <input
-                      type="checkbox"
-                      checked={showProdCode}
-                      onChange={(e) => setShowProdCode(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900"
-                      disabled={!isUserAdmin}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Simulador de Recibo Térmico (En Vivo) */}
-              <div className="border border-slate-200 bg-amber-50/10 p-6 rounded-xl shadow-inner space-y-4 flex flex-col items-center">
-                <div className="text-center font-bold text-xs uppercase tracking-widest text-slate-400">Previsualización de Ticket</div>
-                
-                {/* Estilo Ticket Térmico */}
-                <div className="w-full max-w-[280px] bg-white border border-slate-200 shadow-lg p-4 font-mono text-[10px] text-slate-800 space-y-4 leading-tight">
-                  <div className="text-center space-y-1">
-                    <div className="font-extrabold text-sm uppercase tracking-tight">{storeName}</div>
-                    {receiptHeader.trim() && <p className="whitespace-pre-line text-slate-500">{receiptHeader}</p>}
-                  </div>
-
-                  <div className="border-t border-dashed border-slate-300 pt-2 space-y-1">
-                    {showCustInfo && (
-                      <div className="text-slate-400">
-                        CLIENTE: Martin Maldonado<br />
-                        TEL: +592 1234 5678
-                      </div>
-                    )}
-                    <div>FECHA: {new Date().toLocaleDateString()}</div>
-                  </div>
-
-                  <div className="border-t border-dashed border-slate-300 py-2 space-y-1.5">
-                    <div className="flex justify-between font-bold">
-                      <span>DESCRIPCIÓN</span>
-                      <span>TOTAL</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>1x Hamburguesa Especial {showProdCode && '#PROD01'}</span>
-                      <span>$12.50</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>2x Gaseosa Fria {showProdCode && '#PROD02'}</span>
-                      <span>$5.00</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-dashed border-slate-300 pt-2 space-y-1 text-right font-bold">
-                    <div className="flex justify-between"><span>SUBTOTAL:</span> <span>$17.50</span></div>
-                    {collectSalesTax && (
-                      <div className="flex justify-between">
-                        <span>IMP ({salesTaxRate}%):</span> 
-                        <span>${(17.5 * (parseFloat(salesTaxRate) || 0) / 100).toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm pt-1 border-t border-slate-200 font-extrabold">
-                      <span>TOTAL:</span> 
-                      <span>${(17.5 + (17.5 * (parseFloat(salesTaxRate) || 0) / 100)).toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  {receiptFooter.trim() && (
-                    <div className="border-t border-dashed border-slate-300 pt-3 text-center text-slate-500 whitespace-pre-line">
-                      {receiptFooter}
-                    </div>
-                  )}
-
-                  {receiptNotes.trim() && (
-                    <div className="text-[8px] text-slate-400 text-center leading-normal pt-2">
-                      {receiptNotes}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 4. AJUSTES MÉTODOS DE PAGO */}
-          {activeSubTab === 'payments' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-bold text-slate-900 text-lg">Métodos de Pago del Comprador</h3>
-                <p className="text-xs text-slate-500">Activa los métodos de pago que los clientes verán en el checkout de la tienda móvil.</p>
+                <h3 className="font-bold text-slate-900 text-lg">Pedidos y Ventas</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Controla las reglas de impuestos y los estados del flujo de pedidos.</p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Permitir "Pagar más tarde"</span>
-                    <p className="text-xs text-slate-500">El cliente realiza el pedido sin pagar y acuerda el pago en WhatsApp.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={allowPayLater}
-                    onChange={(e) => setAllowPayLater(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900"
-                    disabled={!isUserAdmin}
-                  />
+                <div className="p-4 bg-surface border border-border-subtle rounded-lg space-y-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={collectSalesTax}
+                      onChange={(e) => setCollectSalesTax(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Cobrar impuestos a las ventas (IVA / Sales Tax)</span>
+                  </label>
+
+                  {collectSalesTax && (
+                    <div className="space-y-1.5 max-w-xs font-semibold text-xs">
+                      <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Tasa de impuesto (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={salesTaxRate}
+                        onChange={(e) => setSalesTaxRate(e.target.value)}
+                        placeholder="16"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium"
+                        disabled={!isUserAdmin}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Habilitar Crédito de Negocio</span>
-                    <p className="text-xs text-slate-500">Permite registrar deudas y créditos internos del comercio.</p>
+                <div className="space-y-3 pt-4 border-t border-border-subtle">
+                  <h4 className="font-bold text-slate-900 text-sm">Visualización de Historial</h4>
+                  <div className="space-y-1.5 max-w-sm font-semibold text-xs">
+                    <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Mostrar pedidos cancelados en historial</label>
+                    <select
+                      value={showCanceledOrders}
+                      onChange={(e) => setShowCanceledOrders(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium bg-white"
+                      disabled={!isUserAdmin}
+                    >
+                      <option value="show">Mostrar siempre en el listado</option>
+                      <option value="hide">Ocultar pedidos cancelados por defecto</option>
+                    </select>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={storeCreditEnabled}
-                    onChange={(e) => setStoreCreditEnabled(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900"
-                    disabled={!isUserAdmin}
-                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* 5. AJUSTES ENTREGA Y RECOGIDA */}
+          {/* 3. IMPRESIÓN DE RECIBO (Diseño: ajustes_recibo) */}
+          {activeSubTab === 'receipt' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-lg">Estructura del Recibo</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Configura los cabezales y notas legales impresas en el ticket PDF / WhatsApp.</p>
+              </div>
+
+              <div className="space-y-5 text-xs font-semibold">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Texto de Cabecera (Header)</label>
+                  <textarea
+                    value={receiptHeader}
+                    onChange={(e) => setReceiptHeader(e.target.value)}
+                    placeholder="Ej. ¡Gracias por preferirnos! NIT: 12345-A"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium bg-white"
+                    rows={2}
+                    disabled={!isUserAdmin}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Texto del Pie (Footer)</label>
+                  <textarea
+                    value={receiptFooter}
+                    onChange={(e) => setReceiptFooter(e.target.value)}
+                    placeholder="Ej. Conserve este ticket para devoluciones."
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium bg-white"
+                    rows={2}
+                    disabled={!isUserAdmin}
+                  />
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-border-subtle">
+                  <h4 className="font-bold text-slate-900 text-sm">Información Incluida</h4>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={showCustInfo}
+                        onChange={(e) => setShowCustInfo(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                        disabled={!isUserAdmin}
+                      />
+                      <span className="text-xs text-slate-700 font-bold">Incluir datos del cliente en el recibo (WhatsApp, Nombre)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={showProdCode}
+                        onChange={(e) => setShowProdCode(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                        disabled={!isUserAdmin}
+                      />
+                      <span className="text-xs text-slate-700 font-bold">Mostrar códigos SKU / IDs de productos en las filas</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 4. MÉTODOS DE PAGO (Diseño: ajustes_pagos) */}
+          {activeSubTab === 'payments' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-lg">Métodos de Pago</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Habilita o restringe las formas de liquidación al checkout.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-4 bg-surface border border-border-subtle rounded-lg space-y-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={allowPayLater}
+                      onChange={(e) => setAllowPayLater(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Habilitar "Pagar al Recibir" (Efectivo / Transferencia local)</span>
+                  </label>
+                  <p className="text-[10px] text-on-surface-variant leading-normal pl-6">
+                    Permite al cliente realizar su pedido y coordinar el pago directamente con el vendedor por WhatsApp.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-surface border border-border-subtle rounded-lg space-y-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={storeCreditEnabled}
+                      onChange={(e) => setStoreCreditEnabled(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Habilitar Crédito de Tienda (Cuentas Corrientes)</span>
+                  </label>
+                  <p className="text-[10px] text-on-surface-variant leading-normal pl-6">
+                    Opción especial para que clientes VIP o corporativos puedan dejar saldos pendientes a cuenta.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. ENTREGA Y RECOGIDA (Diseño: ajustes_recogida_y_entrega) */}
           {activeSubTab === 'delivery' && (
             <div className="space-y-6">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">Métodos de Entrega</h3>
-                <p className="text-xs text-slate-500">Configura la recogida en tienda y los envíos a domicilio.</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">Controla la logística de retiro y envío a domicilio.</p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Permitir Recogida Local (Takeaway)</span>
-                    <p className="text-xs text-slate-500">Los clientes pueden elegir retirar los productos en el local.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={allowPickup}
-                    onChange={(e) => setAllowPickup(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900"
-                    disabled={!isUserAdmin}
-                  />
+                <div className="p-4 bg-surface border border-border-subtle rounded-lg space-y-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={allowPickup}
+                      onChange={(e) => setAllowPickup(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Habilitar Retiro en Tienda (Takeaway)</span>
+                  </label>
+                  <p className="text-[10px] text-on-surface-variant leading-normal pl-6">
+                    El cliente podrá pasar a recoger sus productos al local físico sin cargos adicionales de envío.
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                  <div>
-                    <span className="text-sm font-bold text-slate-900">Permitir Entrega a Domicilio (Delivery)</span>
-                    <p className="text-xs text-slate-500">Los clientes pueden solicitar el envío del pedido a su dirección.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={allowDelivery}
-                    onChange={(e) => setAllowDelivery(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900"
-                    disabled={!isUserAdmin}
-                  />
+                <div className="p-4 bg-surface border border-border-subtle rounded-lg space-y-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={allowDelivery}
+                      onChange={(e) => setAllowDelivery(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
+                      disabled={!isUserAdmin}
+                    />
+                    <span className="text-xs text-slate-700 font-bold">Habilitar Envío a Domicilio (Delivery)</span>
+                  </label>
+                  <p className="text-[10px] text-on-surface-variant leading-normal pl-6">
+                    Se solicitará la dirección de entrega al comprador y se calcularán los precios según las reglas de envío.
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 6. EQUIPO DE COLABORADORES (CREAR Y REVOCAR) */}
+          {/* 6. EQUIPO Y COLABORADORES */}
           {activeSubTab === 'team' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Colaboradores y Permisos</h3>
-                <p className="text-xs text-slate-500">Invita administradores o editores para ayudarte a gestionar la tienda.</p>
+                <h3 className="font-bold text-slate-900 text-lg">Equipo de Colaboradores</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">Añade o remueve administradores y editores de la tienda.</p>
               </div>
 
-              {/* Formulario Invitación (Solo Dueño o Admin) */}
-              {isUserAdmin ? (
-                <form onSubmit={handleInviteMember} className="bg-slate-50 border border-slate-100 p-4 rounded-xl space-y-4">
-                  <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Invitar nuevo miembro</span>
-                  <div className="flex flex-col md:flex-row gap-3">
+              {/* Formulario de invitación */}
+              {isUserAdmin && (
+                <form onSubmit={handleInviteMember} className="bg-slate-50 border border-border-subtle p-4 rounded-lg flex flex-col md:flex-row items-end gap-4 text-xs font-semibold">
+                  <div className="flex-1 space-y-1.5 w-full">
+                    <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Correo Electrónico</label>
                     <input
                       type="email"
                       value={newMemberEmail}
                       onChange={(e) => setNewMemberEmail(e.target.value)}
                       placeholder="colaborador@correo.com"
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm bg-white"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                       required
                     />
-                    
+                  </div>
+
+                  <div className="w-full md:w-48 space-y-1.5">
+                    <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Rol asignado</label>
                     <select
                       value={newMemberRole}
                       onChange={(e) => setNewMemberRole(e.target.value)}
-                      className="px-3 py-2 border border-slate-200 rounded-md text-xs font-semibold bg-white md:max-w-[150px]"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                     >
-                      <option value="admin">Administrador</option>
-                      <option value="editor">Editor (Inventario)</option>
-                      <option value="viewer">Lector (Solo ver)</option>
+                      <option value="editor">Editor (Sólo Catálogo)</option>
+                      <option value="admin">Administrador (Completo)</option>
                     </select>
-
-                    <Button
-                      type="submit"
-                      disabled={loadingTeam}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5 h-10 px-4"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{loadingTeam ? 'Enviando...' : 'Enviar Invitación'}</span>
-                    </Button>
                   </div>
+
+                  <button
+                    type="submit"
+                    disabled={loadingTeam}
+                    className="w-full md:w-auto px-5 py-2.5 bg-admin-deep-blue text-on-primary rounded font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">person_add</span>
+                    <span>{loadingTeam ? 'Invitando...' : 'Invitar'}</span>
+                  </button>
                 </form>
-              ) : (
-                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-600 text-xs">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>Solo los administradores directos o dueños pueden gestionar el equipo de colaboradores.</span>
-                </div>
               )}
 
-              {/* Listado de Miembros del Equipo */}
-              <div className="space-y-4">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Equipo Registrado</span>
-                
-                {teamMembers.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-slate-400 border border-dashed border-slate-100 rounded-lg">
-                    No tienes colaboradores agregados todavía.
-                  </div>
-                ) : (
-                  <div className="border border-slate-100 rounded-xl divide-y divide-slate-100">
-                    {teamMembers.map((member) => (
-                      <div key={member.id} className="p-3.5 flex justify-between items-center gap-4 hover:bg-slate-50/40">
-                        <div className="space-y-0.5">
-                          <div className="font-bold text-slate-900 text-sm">{member.email}</div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold uppercase rounded text-[10px]">
-                              {member.role === 'admin' ? 'Administrador' : member.role === 'editor' ? 'Editor' : 'Lector'}
-                            </span>
-                            <span className={`px-2 py-0.5 font-bold uppercase rounded text-[10px] ${
-                              member.status === 'active' 
-                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                                : 'bg-amber-50 text-amber-600 border border-amber-100'
-                            }`}>
-                              {member.status === 'active' ? 'Activo' : 'Pendiente registro'}
-                            </span>
-                          </div>
+              {/* Listado de colaboradores */}
+              <div className="border border-border-subtle rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-surface border-b border-border-subtle px-4 py-3">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Miembros Activos</span>
+                </div>
+                <div className="divide-y divide-border-subtle text-xs">
+                  {teamMembers.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400">Sólo tú tienes acceso a esta tienda.</div>
+                  ) : (
+                    teamMembers.map((member) => (
+                      <div key={member.id} className="p-4 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{member.email}</p>
+                          <p className="text-[10px] text-on-surface-variant mt-0.5">
+                            Rol: <span className="font-semibold text-slate-700">{member.role === 'admin' ? 'Administrador' : 'Editor'}</span>
+                          </p>
                         </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            member.status === 'pending'
+                              ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {member.status === 'pending' ? 'Pendiente' : 'Aceptado'}
+                          </span>
 
-                        {/* Revocar (Solo Dueños o Admins pueden revocar) */}
-                        {isUserAdmin && (
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                            title="Revocar Colaborador"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                          {isUserAdmin && (
+                            <button
+                              onClick={() => {
+                                if (confirm('¿Deseas revocar el acceso a este colaborador?')) {
+                                  handleDeleteMember(member.id)
+                                }
+                              }}
+                              className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                              title="Remover Miembro"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

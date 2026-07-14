@@ -3,19 +3,6 @@
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import {
-  Tag,
-  Plus,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Edit,
-  EyeOff,
-  Eye,
-  Check,
-  FolderPlus,
-  ShoppingBag
-} from 'lucide-react'
 
 interface Category {
   id: string
@@ -56,7 +43,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
 
   // Estados Producto (Modal Crear/Editar)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null) // null significa Crear Nuevo
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   
   // Campos del Formulario de Producto
   const [prodTitle, setProdTitle] = useState('')
@@ -81,7 +68,6 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
 
-    // La nueva posición será el máximo actual + 1
     const maxPosition = categories.reduce((max, cat) => cat.position > max ? cat.position : max, 0)
 
     const { data, error } = await supabase
@@ -133,7 +119,6 @@ export default function ProductsClient({ store, initialCategories, initialProduc
     const currentCat = categories[index]
     const swapCat = categories[targetIndex]
 
-    // Intercambiar posiciones en la base de datos
     const { error: err1 } = await supabase
       .from('categories')
       .update({ position: swapCat.position })
@@ -188,7 +173,6 @@ export default function ProductsClient({ store, initialCategories, initialProduc
     const imagesArray = prodImageUrl.trim() ? [prodImageUrl.trim()] : []
 
     if (selectedProduct) {
-      // Modificar Producto
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -208,7 +192,6 @@ export default function ProductsClient({ store, initialCategories, initialProduc
         setIsProductModalOpen(false)
       }
     } else {
-      // Crear Nuevo Producto
       const maxPosition = products.reduce((max, prod) => prod.position > max ? prod.position : max, 0)
       
       const { data, error } = await supabase
@@ -264,143 +247,166 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   }
 
   return (
-    <div className="space-y-6">
-      {/* Cabecera */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 font-body-base text-on-surface">
+      {/* Cabecera (Diseño de Stitch) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Catálogo e Inventario</h1>
-          <p className="text-sm text-slate-500 mt-1">Crea y ordena tus categorías y productos del catálogo digital.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Catálogo de Productos</h1>
+          <p className="text-sm text-on-surface-variant">Gestiona tu inventario, precios y disponibilidad.</p>
         </div>
-        
-        {/* Selector de Pestaña */}
-        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200/60">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex bg-slate-100 p-1 rounded border border-border-subtle mr-2">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${
+                activeTab === 'products' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Productos
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${
+                activeTab === 'categories' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Categorías
+            </button>
+          </div>
+
           <button
-            onClick={() => setActiveTab('products')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
-              activeTab === 'products' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-            }`}
+            onClick={() => handleOpenProductModal(null)}
+            className="flex items-center gap-2 bg-admin-deep-blue text-on-primary px-5 py-2 rounded font-bold text-xs hover:opacity-90 transition-opacity shadow-sm"
           >
-            Productos
-          </button>
-          <button
-            onClick={() => setActiveTab('categories')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
-              activeTab === 'categories' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Categorías
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span>Añadir Producto</span>
           </button>
         </div>
       </div>
 
-      {/* PESTAÑA: PRODUCTOS */}
+      {/* PESTAÑA: PRODUCTOS (Diseño Grid de Tarjetas de Stitch) */}
       {activeTab === 'products' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-slate-900 text-lg">Todos los productos</h3>
-            <Button
-              onClick={() => handleOpenProductModal(null)}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nuevo Producto</span>
-            </Button>
-          </div>
+        <>
+          {products.length === 0 ? (
+            <div className="text-center py-16 text-slate-400 border border-dashed border-border-subtle rounded-lg bg-white">
+              <span className="material-symbols-outlined text-[40px] text-slate-200 mx-auto mb-2 block">inventory_2</span>
+              <div className="font-bold text-sm text-slate-700">No hay productos en tu catálogo</div>
+              <p className="text-xs text-slate-500 mt-1">Usa el botón superior para añadir el primer producto.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => {
+                const categoryName = categories.find((c) => c.id === product.category_id)?.name || 'Sin categoría'
+                return (
+                  <div 
+                    key={product.id}
+                    className={`bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden hover:border-outline-variant transition-colors group cursor-pointer flex flex-col h-full ${
+                      !product.is_available ? 'opacity-75' : ''
+                    }`}
+                    onClick={() => handleOpenProductModal(product)}
+                  >
+                    {/* Imagen superior */}
+                    <div className="relative h-48 w-full bg-surface-container flex-shrink-0 overflow-hidden">
+                      {product.images[0] ? (
+                        <img 
+                          src={product.images[0]} 
+                          alt={product.title} 
+                          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                            !product.is_available ? 'grayscale' : ''
+                          }`}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-surface-container flex items-center justify-center text-slate-300">
+                          <span className="material-symbols-outlined text-[40px]">image</span>
+                        </div>
+                      )}
+                      
+                      {/* Tag de estado */}
+                      <div className="absolute top-2 right-2 bg-surface/90 backdrop-blur-sm px-2.5 py-0.5 rounded border border-border-subtle flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          product.is_available ? 'bg-status-completed' : 'bg-surface-variant'
+                        }`}></span>
+                        <span className="text-[9px] font-bold text-on-surface uppercase tracking-wider">
+                          {product.is_available ? 'Activo' : 'Oculto'}
+                        </span>
+                      </div>
+                    </div>
 
-          <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden">
-            {products.length === 0 ? (
-              <div className="text-center py-16 text-slate-400">
-                <ShoppingBag className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-                <div className="font-bold text-sm text-slate-700">No hay productos creados</div>
-                <p className="text-xs text-slate-500 mt-1">Haz clic en "Nuevo Producto" para añadir el primero.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      <th className="px-6 py-4">Imagen</th>
-                      <th className="px-6 py-4">Nombre del Producto</th>
-                      <th className="px-6 py-4">Categoría</th>
-                      <th className="px-6 py-4 text-right">Precio</th>
-                      <th className="px-6 py-4 text-center">Disponible</th>
-                      <th className="px-6 py-4 text-center">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {products.map((product) => {
-                      const categoryName = categories.find((c) => c.id === product.category_id)?.name || 'Sin categoría'
-                      return (
-                        <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-3">
-                            {product.images[0] ? (
-                              <img
-                                src={product.images[0]}
-                                alt={product.title}
-                                className="w-10 h-10 rounded-md object-cover border border-slate-100"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-slate-400">
-                                <ShoppingBag className="w-5 h-5" />
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-3 font-bold text-slate-900">{product.title}</td>
-                          <td className="px-6 py-3 text-xs font-medium text-slate-500">{categoryName}</td>
-                          <td className="px-6 py-3 font-bold text-slate-900 text-right">{formatCurrency(product.price)}</td>
-                          <td className="px-6 py-3 text-center">
-                            <button
-                              onClick={() => handleToggleProductAvailable(product.id, product.is_available)}
-                              className={`p-1.5 rounded-full transition-colors ${
-                                product.is_available 
-                                  ? 'text-emerald-600 hover:bg-emerald-50' 
-                                  : 'text-slate-400 hover:bg-slate-50'
+                    {/* Detalles */}
+                    <div className="p-4 flex flex-col flex-grow">
+                      <div className="flex justify-between items-center mb-1 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                        <span>{categoryName}</span>
+                        <span>SKU: {product.id.slice(0, 5).toUpperCase()}</span>
+                      </div>
+                      
+                      <h3 className="font-semibold text-sm text-primary mb-2 line-clamp-2 min-h-[40px]">
+                        {product.title}
+                      </h3>
+
+                      {product.description && (
+                        <p className="text-[11px] text-on-surface-variant line-clamp-2 leading-relaxed mb-4">
+                          {product.description}
+                        </p>
+                      )}
+
+                      {/* Pie con precio y toggle */}
+                      <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-subtle">
+                        <span className={`text-base font-bold ${
+                          product.is_available ? 'text-primary' : 'text-on-surface-variant line-through'
+                        }`}>
+                          {formatCurrency(product.price)}
+                        </span>
+
+                        {/* Toggle Switch */}
+                        <div 
+                          className="flex items-center gap-2"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleToggleProductAvailable(product.id, product.is_available)
+                          }}
+                        >
+                          <span className={`text-[10px] font-bold uppercase ${
+                            product.is_available ? 'text-emerald-500' : 'text-slate-400'
+                          }`}>
+                            {product.is_available ? 'On' : 'Off'}
+                          </span>
+                          <div className="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
+                            <input 
+                              type="checkbox"
+                              checked={product.is_available}
+                              readOnly
+                              className={`absolute block w-4 h-4 rounded-full bg-white border border-slate-300 appearance-none cursor-pointer transition-transform duration-300 ${
+                                product.is_available ? 'translate-x-4 border-emerald-400 bg-emerald-500' : 'translate-x-0'
                               }`}
-                              title={product.is_available ? 'Disponible' : 'No disponible'}
-                            >
-                              {product.is_available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            </button>
-                          </td>
-                          <td className="px-6 py-3 text-center flex justify-center items-center gap-2">
-                            <Button
-                              onClick={() => handleOpenProductModal(product)}
-                              variant="ghost"
-                              className="h-8 px-2 text-slate-600 hover:bg-slate-100"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              onClick={() => handleDeleteProduct(product.id)}
-                              variant="ghost"
-                              className="h-8 px-2 text-red-500 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+                            />
+                            <div className={`block overflow-hidden h-4 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300 ${
+                              product.is_available ? 'bg-emerald-100' : ''
+                            }`} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* PESTAÑA: CATEGORÍAS */}
       {activeTab === 'categories' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Creador de Categorías */}
-          <div className="bg-white border border-slate-100 rounded-xl shadow-sm p-6 h-fit space-y-4">
+          <div className="bg-white border border-border-subtle rounded-xl p-6 h-fit space-y-4 shadow-sm">
             <div>
               <h3 className="font-bold text-slate-900 text-lg">Nueva Categoría</h3>
-              <p className="text-xs text-slate-500">Añade secciones para estructurar el catálogo.</p>
+              <p className="text-xs text-on-surface-variant">Añade secciones para estructurar el catálogo.</p>
             </div>
             
             <form onSubmit={handleCreateCategory} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                   Nombre de Categoría
                 </label>
                 <input
@@ -408,91 +414,93 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="Ej. Hamburguesas, Bebidas"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white"
                   required
                 />
               </div>
 
-              <Button
+              <button
                 type="submit"
                 disabled={loadingCat}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5"
+                className="w-full flex justify-center items-center gap-2 bg-admin-deep-blue text-on-primary py-2.5 rounded font-bold text-xs hover:opacity-90"
               >
-                <FolderPlus className="w-4 h-4" />
+                <span className="material-symbols-outlined text-[16px]">folder_open</span>
                 <span>{loadingCat ? 'Guardando...' : 'Crear Categoría'}</span>
-              </Button>
+              </button>
             </form>
           </div>
 
           {/* Listado y Reordenamiento */}
-          <div className="lg:col-span-2 bg-white border border-slate-100 rounded-xl shadow-sm p-6 space-y-4">
+          <div className="lg:col-span-2 bg-white border border-border-subtle rounded-xl p-6 space-y-4 shadow-sm">
             <div>
-              <h3 className="font-bold text-slate-900 text-lg">Posiciones y Roles</h3>
-              <p className="text-xs text-slate-500">Usa las flechas para reordenar la aparición visual en la tienda móvil.</p>
+              <h3 className="font-bold text-slate-900 text-lg">Posiciones del Catálogo</h3>
+              <p className="text-xs text-on-surface-variant">Usa las flechas para ordenar la aparición visual de tus categorías.</p>
             </div>
 
             {categories.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 border border-dashed border-slate-100 rounded-lg">
-                <Tag className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-                <div className="font-bold text-sm text-slate-700">No hay categorías</div>
-                <p className="text-xs text-slate-500 mt-1">Usa el panel de la izquierda para registrar la primera.</p>
+              <div className="text-center py-12 text-slate-400 border border-dashed border-border-subtle rounded-lg">
+                <span className="material-symbols-outlined text-[40px] text-slate-200 mb-2 block">tag</span>
+                <div className="font-bold text-xs text-slate-700">No hay categorías</div>
+                <p className="text-[10px] text-slate-500 mt-1">Registra la primera en el panel izquierdo.</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-border-subtle">
                 {categories.map((cat, index) => {
                   const itemsCount = products.filter((p) => p.category_id === cat.id).length
                   return (
-                    <div key={cat.id} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
+                    <div key={cat.id} className="py-3.5 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-950">{cat.name}</span>
-                          <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-500">
+                          <span className="font-bold text-slate-900 text-sm">{cat.name}</span>
+                          <span className="text-[9px] bg-slate-100 border border-slate-200/50 px-2 py-0.5 rounded font-bold text-slate-500 uppercase tracking-wide">
                             {itemsCount} {itemsCount === 1 ? 'producto' : 'productos'}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-400">Slug: /{cat.slug}</div>
+                        <div className="text-[10px] text-on-surface-variant font-mono">Slug: /{cat.slug}</div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {/* Botones de posición */}
-                        <div className="flex items-center border border-slate-200 rounded-md">
+                        <div className="flex items-center border border-border-subtle rounded bg-white">
                           <button
                             onClick={() => handleMoveCategory(index, 'up')}
                             disabled={index === 0}
                             className="p-1.5 hover:bg-slate-50 disabled:opacity-30 transition-colors"
                           >
-                            <ArrowUp className="w-3.5 h-3.5" />
+                            <span className="material-symbols-outlined text-[16px] block">arrow_upward</span>
                           </button>
-                          <span className="border-l border-slate-200 h-6" />
+                          <span className="border-l border-border-subtle h-5" />
                           <button
                             onClick={() => handleMoveCategory(index, 'down')}
                             disabled={index === categories.length - 1}
                             className="p-1.5 hover:bg-slate-50 disabled:opacity-30 transition-colors"
                           >
-                            <ArrowDown className="w-3.5 h-3.5" />
+                            <span className="material-symbols-outlined text-[16px] block">arrow_downward</span>
                           </button>
                         </div>
 
                         {/* Visibilidad */}
                         <button
                           onClick={() => handleToggleCategoryActive(cat.id, cat.is_active)}
-                          className={`p-1.5 rounded-md border ${
+                          className={`p-1.5 rounded border transition-colors ${
                             cat.is_active 
                               ? 'text-emerald-600 bg-emerald-50 border-emerald-100' 
                               : 'text-slate-400 bg-slate-50 border-slate-200'
                           }`}
                           title={cat.is_active ? 'Visible' : 'Oculto'}
                         >
-                          {cat.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          <span className="material-symbols-outlined text-[18px] block">
+                            {cat.is_active ? 'visibility' : 'visibility_off'}
+                          </span>
                         </button>
 
                         {/* Borrar */}
                         <button
                           onClick={() => handleDeleteCategory(cat.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-md"
+                          className="p-1.5 text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 rounded"
                           title="Eliminar Categoría"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <span className="material-symbols-outlined text-[18px] block">delete</span>
                         </button>
                       </div>
                     </div>
@@ -508,51 +516,51 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       {isProductModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60" onClick={() => setIsProductModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden">
+          <div className="relative bg-white rounded-xl shadow-xl border border-border-subtle max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
             
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
-              <h3 className="font-black text-slate-900 text-base">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-border-subtle bg-slate-50">
+              <h3 className="font-bold text-on-surface text-sm">
                 {selectedProduct ? 'Editar Producto' : 'Crear Producto'}
               </h3>
               <button 
                 onClick={() => setIsProductModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+                className="p-1 rounded-md text-on-surface-variant hover:bg-slate-200 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <span className="material-symbols-outlined text-[20px] block">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                   Nombre del Producto
                 </label>
                 <input
                   type="text"
                   value={prodTitle}
                   onChange={(e) => setProdTitle(e.target.value)}
-                  placeholder="Ej. Pizza Muzzarella, Coca-Cola 1.5L"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                  placeholder="Ej. Teclado Mecánico, Taza de Café"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              <div className="space-y-1">
+                <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                   Descripción
                 </label>
                 <textarea
                   value={prodDesc}
                   onChange={(e) => setProdDesc(e.target.value)}
-                  placeholder="Ej. Deliciosa pizza con salsa de tomate natural y queso fundido."
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                  placeholder="Detalles sobre el material, color, tamaño, etc."
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                   rows={3}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                     Precio ($)
                   </label>
                   <input
@@ -561,19 +569,19 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                     value={prodPrice}
                     onChange={(e) => setProdPrice(e.target.value)}
                     placeholder="9.90"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                     Categoría
                   </label>
                   <select
                     value={prodCatId}
                     onChange={(e) => setProdCatId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                   >
                     <option value="">Sin Categoría</option>
                     {categories.map((cat) => (
@@ -583,16 +591,16 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  URL de Imagen (Opcional)
+              <div className="space-y-1">
+                <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
+                  URL de Imagen (Pegar enlace)
                 </label>
                 <input
                   type="url"
                   value={prodImageUrl}
                   onChange={(e) => setProdImageUrl(e.target.value)}
                   placeholder="https://ejemplo.com/imagen.jpg"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-sm bg-white"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs bg-white font-medium"
                 />
               </div>
 
@@ -602,28 +610,46 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                   id="prod_avail"
                   checked={prodAvailable}
                   onChange={(e) => setProdAvailable(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                  className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
                 />
-                <label htmlFor="prod_avail" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                  Producto disponible para la venta inmediata
+                <label htmlFor="prod_avail" className="text-xs text-slate-700 cursor-pointer font-bold select-none">
+                  Producto disponible para la venta inmediata (Activo)
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-100">
+              {selectedProduct && (
+                <div className="pt-2 border-t border-border-subtle">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('¿Seguro que deseas eliminar este producto?')) {
+                        handleDeleteProduct(selectedProduct.id)
+                        setIsProductModalOpen(false)
+                      }
+                    }}
+                    className="w-full py-2 bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 hover:text-red-600 rounded font-bold transition-all text-xs flex justify-center items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    <span>Eliminar este producto permanentemente</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t border-border-subtle">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsProductModalOpen(false)}
-                  className="flex-1 text-slate-700"
+                  className="flex-1 text-slate-700 text-xs font-bold"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={loadingProd}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs gap-1.5"
+                  className="flex-1 bg-admin-deep-blue hover:opacity-90 text-white font-bold text-xs gap-1.5 h-10 shadow-sm"
                 >
-                  <Check className="w-4 h-4" />
+                  <span className="material-symbols-outlined text-[16px]">check</span>
                   <span>{loadingProd ? 'Guardando...' : 'Guardar Producto'}</span>
                 </Button>
               </div>

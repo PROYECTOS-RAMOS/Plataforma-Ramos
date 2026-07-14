@@ -5,18 +5,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Tag, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Menu, 
-  X,
-  ExternalLink,
-  Store
-} from 'lucide-react'
 
 interface AdminLayoutClientProps {
   profile: {
@@ -38,11 +26,11 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   const supabase = createClient()
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Pedidos', href: '/orders', icon: ShoppingBag },
-    { name: 'Productos', href: '/products', icon: Tag },
-    { name: 'Clientes', href: '/customers', icon: Users },
-    { name: 'Ajustes', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { name: 'Pedidos', href: '/orders', icon: 'shopping_cart' },
+    { name: 'Productos', href: '/products', icon: 'inventory_2' },
+    { name: 'Clientes', href: '/customers', icon: 'group' },
+    { name: 'Ajustes', href: '/settings', icon: 'settings' },
   ]
 
   const handleLogout = async () => {
@@ -50,69 +38,37 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
     window.location.href = '/login'
   }
 
-  const publicStoreUrl = store 
-    ? `http://${store.slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'}`
-    : '#'
-
   const isActiveLink = (href: string) => {
     return pathname.startsWith(href)
   }
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col justify-between bg-slate-950 text-slate-200 p-4 border-r border-slate-900">
+    <div className="h-full flex flex-col justify-between bg-surface dark:bg-inverse-surface py-6 px-4">
       <div className="space-y-6">
-        {/* Identificación Plataforma */}
-        <div className="flex items-center gap-2 px-2 py-3">
-          <Store className="w-6 h-6 text-emerald-400" />
-          <span className="text-lg font-black tracking-tight text-white">PLATAFORMA RAMOS</span>
+        {/* Cabecera del Panel */}
+        <div className="px-3 mb-2">
+          <h1 className="text-xl font-bold tracking-tight text-primary dark:text-primary-fixed">Admin Panel</h1>
+          <p className="text-xs text-on-surface-variant">
+            {store ? store.name : 'Plataforma Ramos'}
+          </p>
         </div>
-
-        {/* Tienda y Plan */}
-        {store ? (
-          <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-2">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tienda Administrada</div>
-            <div className="font-bold text-white text-sm truncate">{store.name}</div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold uppercase">
-                {store.plan_id === 'premium' ? 'Plan Pro' : 'Plan Gratis'}
-              </span>
-              <a 
-                href={publicStoreUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
-              >
-                <span>Ver Tienda</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg text-center">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sin Tienda Registrada</div>
-            <Link href="/settings" className="text-xs font-bold text-emerald-400 hover:underline">
-              Crear Tienda ahora
-            </Link>
-          </div>
-        )}
 
         {/* Menú de Navegación */}
         <nav className="space-y-1">
           {navigation.map((item) => {
-            const Icon = item.icon
             const active = isActiveLink(item.href)
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-all ${
                   active 
-                    ? 'bg-slate-800 text-white border-l-4 border-emerald-400' 
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-white'
+                    ? 'text-secondary dark:text-secondary-fixed-dim bg-secondary-container/10 font-bold opacity-90' 
+                    : 'text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                 <span>{item.name}</span>
               </Link>
             )
@@ -121,31 +77,31 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
       </div>
 
       {/* Perfil del Vendedor y Logout */}
-      <div className="border-t border-slate-900 pt-4 space-y-4">
-        <div className="flex items-center gap-3 px-2">
+      <div className="border-t border-border-subtle dark:border-outline-variant pt-4 space-y-4">
+        <div className="flex items-center gap-3 px-3">
           {profile.avatar_url ? (
             <img 
               src={profile.avatar_url} 
               alt={profile.full_name} 
-              className="w-9 h-9 rounded-full object-cover border border-slate-800"
+              className="w-10 h-10 rounded-full object-cover border border-border-subtle"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-white text-sm">
+            <div className="w-10 h-10 rounded-full bg-secondary-container/10 text-secondary flex items-center justify-center font-bold text-sm">
               {profile.full_name.charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-white truncate">{profile.full_name}</div>
-            <div className="text-xs text-slate-500 truncate">Vendedor</div>
+          <div className="min-w-0 flex-1 text-xs">
+            <div className="font-bold text-slate-900 truncate">{profile.full_name}</div>
+            <div className="text-on-surface-variant truncate">Vendedor</div>
           </div>
         </div>
 
         <Button 
           onClick={handleLogout}
           variant="ghost" 
-          className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-900 gap-3 px-3"
+          className="w-full justify-start text-on-surface-variant hover:text-red-600 hover:bg-red-50 gap-3 px-3 h-10 text-xs font-semibold"
         >
-          <LogOut className="w-5 h-5 text-red-400" />
+          <span className="material-symbols-outlined text-red-500">logout</span>
           <span>Cerrar sesión</span>
         </Button>
       </div>
@@ -153,40 +109,58 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 text-on-surface flex flex-col md:flex-row antialiased">
       {/* Menú de Cabecera Móvil */}
-      <div className="md:hidden bg-slate-950 text-slate-200 border-b border-slate-900 px-4 py-3 flex justify-between items-center">
+      <div className="md:hidden bg-surface dark:bg-inverse-surface text-on-surface border-b border-border-subtle px-4 py-3 flex justify-between items-center z-40 sticky top-0">
         <div className="flex items-center gap-2">
-          <Store className="w-5 h-5 text-emerald-400" />
-          <span className="font-bold tracking-tight text-white">RAMOS PANEL</span>
+          <span className="font-bold tracking-tight text-primary">RAMOS PANEL</span>
         </div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-900 focus:outline-none"
+          className="p-1 rounded-md text-on-surface-variant hover:bg-slate-100"
         >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>
       </div>
 
-      {/* Sidebar de Escritorio */}
-      <aside className="hidden md:block w-72 h-screen sticky top-0 flex-shrink-0">
+      {/* Sidebar de Escritorio (Fixed) */}
+      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-[280px] border-r border-border-subtle dark:border-outline-variant z-40 bg-surface">
         <SidebarContent />
       </aside>
 
       {/* Sidebar Móvil (Drawer) */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/60" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="relative flex flex-col w-72 max-w-xs h-full bg-slate-950">
+          <aside className="relative flex flex-col w-[280px] max-w-xs h-full bg-surface border-r border-border-subtle">
             <SidebarContent />
           </aside>
         </div>
       )}
 
       {/* Contenido Principal de Trabajo */}
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto min-w-0 max-w-7xl mx-auto w-full">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col md:ml-[280px] min-h-screen">
+        <header className="bg-surface border-b border-border-subtle h-16 px-6 hidden md:flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center bg-surface-container-low rounded px-3 py-1.5 w-64 border border-border-subtle">
+            <span className="material-symbols-outlined text-on-surface-variant mr-2 text-[18px]">search</span>
+            <input className="bg-transparent border-none focus:outline-none text-xs w-full p-0" placeholder="Buscar..." type="text" />
+          </div>
+          <div className="flex items-center gap-4 text-on-surface-variant">
+            <button className="hover:opacity-80">
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+            </button>
+            <button className="hover:opacity-80">
+              <span className="material-symbols-outlined text-[20px]">account_circle</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 p-6 md:p-8 bg-surface-container-low overflow-y-auto">
+          <div className="max-w-6xl mx-auto w-full">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
