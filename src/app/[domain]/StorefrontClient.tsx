@@ -17,7 +17,12 @@ import {
   CreditCard,
   Truck,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Mail,
+  Instagram,
+  Phone,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 
 interface Value {
@@ -73,6 +78,10 @@ interface StorefrontClientProps {
     sales_tax_rate: number
     payment_settings: any
     delivery_settings: any
+    instagram_handle?: string | null
+    contact_email?: string | null
+    address_details?: string | null
+    description?: string | null
   }
   categories: Category[]
   products: Product[]
@@ -83,6 +92,10 @@ export default function StorefrontClient({ store, categories, products, shipping
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  
+  // Estados para ordenamiento y visualización de Kyte Storefront en Escritorio
+  const [sortBy, setSortBy] = useState<'categories' | 'lowest' | 'highest' | 'az' | 'za'>('categories')
+  const [viewLayout, setViewLayout] = useState<'instaview' | 'list'>('instaview')
   
   // Estado para el modal de variantes
   const [selectedOptions, setSelectedOptions] = useState<Record<string, { valueId: string; valueName: string; priceModifier: number }>>({})
@@ -127,6 +140,16 @@ export default function StorefrontClient({ store, categories, products, shipping
     const matchesSearch = prod.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (prod.description && prod.description.toLowerCase().includes(searchQuery.toLowerCase()))
     return matchesCategory && matchesSearch
+  })
+
+  // Ordenar productos según el filtro de Stitch/Kyte
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'lowest') return Number(a.price) - Number(b.price)
+    if (sortBy === 'highest') return Number(b.price) - Number(a.price)
+    if (sortBy === 'az') return a.title.localeCompare(b.title)
+    if (sortBy === 'za') return b.title.localeCompare(a.title)
+    // 'categories' mantiene el ordenamiento natural de base de datos
+    return 0
   })
 
   // Abrir modal de variantes o añadir directo si no tiene
@@ -327,112 +350,435 @@ export default function StorefrontClient({ store, categories, products, shipping
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen pb-20">
+    <div className="flex-1 flex flex-col min-h-screen">
       
-      {/* 1. HEADER TIENDA */}
-      <header className="p-6 text-center space-y-3 bg-slate-50 border-b border-slate-100 flex flex-col items-center">
-        <div className="w-14 h-14 rounded-full bg-[var(--tenant-primary)] text-white flex items-center justify-center font-black text-xl shadow-md border-2 border-white">
-          {store.name.charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">{store.name}</h1>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Realiza tu orden rápido y envíala a nuestro WhatsApp.</p>
-        </div>
-      </header>
+      {/* 1. DISEÑO MÓVIL (VERSIÓN STITCH) */}
+      <div className="md:hidden flex-1 flex flex-col min-h-screen pb-20">
+        {/* HEADER TIENDA */}
+        <header className="p-6 text-center space-y-3 bg-slate-50 border-b border-slate-100 flex flex-col items-center">
+          <div className="w-14 h-14 rounded-full bg-[var(--tenant-primary)] text-white flex items-center justify-center font-black text-xl shadow-md border-2 border-white">
+            {store.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">{store.name}</h1>
+            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Realiza tu orden rápido y envíala a nuestro WhatsApp.</p>
+          </div>
+        </header>
 
-      {/* 2. BUSCADOR & CATEGORÍAS */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-md z-20 py-3 border-b border-slate-100 space-y-3 px-4">
-        {/* Barra Búsqueda */}
-        <div className="relative">
-          <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar en el catálogo..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] focus:border-transparent text-sm bg-slate-50/50"
-          />
-        </div>
+        {/* BUSCADOR & CATEGORÍAS */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md z-20 py-3 border-b border-slate-100 space-y-3 px-4">
+          <div className="relative">
+            <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar en el catálogo..."
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] focus:border-transparent text-sm bg-slate-50/50"
+            />
+          </div>
 
-        {/* Carrusel Horizontal Categorías */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4">
-          <button
-            onClick={() => setSelectedCategoryId('all')}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-              selectedCategoryId === 'all'
-                ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-sm'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-            }`}
-          >
-            Todos
-          </button>
-          {categories.map((cat) => (
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4">
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategoryId(cat.id)}
+              onClick={() => setSelectedCategoryId('all')}
               className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                selectedCategoryId === cat.id
+                selectedCategoryId === 'all'
                   ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-sm'
                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
               }`}
             >
-              {cat.name}
+              Todos
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. LISTADO DE PRODUCTOS */}
-      <main className="p-4 flex-1">
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <ShoppingBag className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-            <div className="font-bold text-sm text-slate-700">Sin productos disponibles</div>
-            <p className="text-xs text-slate-500 mt-1">Vuelve a revisar la búsqueda o las categorías.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filteredProducts.map((prod) => (
-              <div 
-                key={prod.id} 
-                onClick={() => handleProductClick(prod)}
-                className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 cursor-pointer transition-all shadow-sm group"
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategoryId(cat.id)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                  selectedCategoryId === cat.id
+                    ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
               >
-                {/* Imagen */}
-                {prod.images[0] ? (
-                  <img
-                    src={prod.images[0]}
-                    alt={prod.title}
-                    className="w-20 h-20 rounded-lg object-cover border border-slate-50 flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
-                    <ShoppingBag className="w-6 h-6" />
-                  </div>
-                )}
-
-                {/* Texto */}
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="font-bold text-slate-900 group-hover:text-[var(--tenant-primary)] transition-colors text-sm truncate">
-                    {prod.title}
-                  </div>
-                  {prod.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-snug">
-                      {prod.description}
-                    </p>
-                  )}
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="font-extrabold text-slate-900 text-sm">{formatPrice(prod.price)}</span>
-                    <button className="p-1 bg-slate-900 text-white rounded-full group-hover:bg-[var(--tenant-primary)] transition-colors">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                {cat.name}
+              </button>
             ))}
           </div>
-        )}
-      </main>
+        </div>
+
+        {/* LISTADO DE PRODUCTOS MÓVIL */}
+        <main className="p-4 flex-1">
+          {sortedProducts.length === 0 ? (
+            <div className="text-center py-16 text-slate-400">
+              <ShoppingBag className="w-12 h-12 text-slate-200 mx-auto mb-2" />
+              <div className="font-bold text-sm text-slate-700">Sin productos disponibles</div>
+              <p className="text-xs text-slate-500 mt-1">Vuelve a revisar la búsqueda o las categorías.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {sortedProducts.map((prod) => (
+                <div 
+                  key={prod.id} 
+                  onClick={() => handleProductClick(prod)}
+                  className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 cursor-pointer transition-all shadow-sm group"
+                >
+                  {prod.images[0] ? (
+                    <img
+                      src={prod.images[0]}
+                      alt={prod.title}
+                      className="w-20 h-20 rounded-lg object-cover border border-slate-50 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
+                      <ShoppingBag className="w-6 h-6" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="font-bold text-slate-900 group-hover:text-[var(--tenant-primary)] transition-colors text-sm truncate">
+                      {prod.title}
+                    </div>
+                    {prod.description && (
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-snug">
+                        {prod.description}
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="font-extrabold text-slate-900 text-sm">{formatPrice(prod.price)}</span>
+                      <button className="p-1 bg-slate-900 text-white rounded-full group-hover:bg-[var(--tenant-primary)] transition-colors">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* 2. DISEÑO DE ESCRITORIO (VERSIÓN KYTE) */}
+      <div className="hidden md:flex flex-col flex-1 min-h-screen bg-white">
+        {/* Cabecera Superior */}
+        <header className="sticky top-0 bg-white border-b border-slate-100 h-16 flex items-center px-8 justify-between z-30 shadow-sm">
+          {/* Caja de Búsqueda */}
+          <div className="relative w-80">
+            <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for items"
+              className="w-full pl-9 pr-4 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-transparent text-xs bg-slate-50/50"
+            />
+          </div>
+
+          {/* Nombre de la Tienda (Centro) */}
+          <div className="text-center">
+            <h1 className="text-xl font-bold tracking-tight text-secondary text-[18px] uppercase">
+              {store.name}
+            </h1>
+          </div>
+
+          {/* Perfil y Carrito */}
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => {
+                if (cart.items.length > 0) {
+                  setIsCartOpen(true)
+                  setIsCheckoutStep(false)
+                }
+              }}
+              className="relative text-slate-700 hover:text-slate-900 flex items-center gap-1 text-xs font-bold"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>CARRITO ({cart.items.reduce((acc, i) => acc + i.quantity, 0)})</span>
+              {cart.items.length > 0 && (
+                <span className="absolute -top-2.5 -right-2.5 bg-secondary text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {cart.items.length}
+                </span>
+              )}
+            </button>
+
+            <span className="text-slate-200">|</span>
+
+            <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-slate-700">LOGIN OR CREATE ACCOUNT</span>
+              <span className="material-symbols-outlined text-[20px] text-slate-500">account_circle</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Cuerpo Principal */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] px-8 py-8 gap-8">
+          {/* Sidebar */}
+          <aside className="space-y-6 flex flex-col border-r border-slate-100 pr-8">
+            {/* Categorías */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Categories</h3>
+              <ul className="space-y-1.5">
+                <li>
+                  <button 
+                    onClick={() => setSelectedCategoryId('all')}
+                    className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
+                      selectedCategoryId === 'all' 
+                        ? 'font-bold text-slate-900' 
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>All</span>
+                    {selectedCategoryId === 'all' && <span className="text-xs">✓</span>}
+                  </button>
+                </li>
+                {categories.map((cat) => (
+                  <li key={cat.id}>
+                    <button 
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
+                        selectedCategoryId === cat.id 
+                          ? 'font-bold text-slate-900' 
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{cat.name}</span>
+                      {selectedCategoryId === cat.id && <span className="text-xs">✓</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Ordenamiento (Sort by) */}
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Sort by</h3>
+              <ul className="space-y-1.5">
+                {[
+                  { id: 'categories', label: 'Categories' },
+                  { id: 'lowest', label: 'Lowest price' },
+                  { id: 'highest', label: 'Highest price' },
+                  { id: 'az', label: 'A-Z' },
+                  { id: 'za', label: 'Z-A' }
+                ].map((option) => (
+                  <li key={option.id}>
+                    <button 
+                      onClick={() => setSortBy(option.id as any)}
+                      className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
+                        sortBy === option.id 
+                          ? 'font-bold text-slate-900' 
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{option.label}</span>
+                      {sortBy === option.id && <span className="text-xs">✓</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Layout */}
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Layout</h3>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setViewLayout('instaview')}
+                  className={`flex-1 py-2 px-3 border rounded-md flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
+                    viewLayout === 'instaview' 
+                      ? 'border-slate-800 bg-slate-950 text-white' 
+                      : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Instaview</span>
+                </button>
+
+                <button 
+                  onClick={() => setViewLayout('list')}
+                  className={`flex-1 py-2 px-3 border rounded-md flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
+                    viewLayout === 'list' 
+                      ? 'border-slate-800 bg-slate-950 text-white' 
+                      : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>List</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contacto */}
+            <div className="pt-6 border-t border-slate-100 space-y-3.5 text-xs text-slate-600 mt-auto">
+              <div className="flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                <a href={`https://wa.me/${store.whatsapp_phone.replace('+', '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {store.whatsapp_phone}
+                </a>
+              </div>
+
+              {store.contact_email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-blue-600" />
+                  <a href={`mailto:${store.contact_email}`} className="hover:underline truncate">
+                    {store.contact_email}
+                  </a>
+                </div>
+              )}
+
+              {store.instagram_handle && (
+                <div className="flex items-center gap-2">
+                  <Instagram className="w-3.5 h-3.5 text-pink-600" />
+                  <a href={`https://instagram.com/${store.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    {store.instagram_handle.startsWith('@') ? store.instagram_handle : `@${store.instagram_handle}`}
+                  </a>
+                </div>
+              )}
+
+              {store.address_details && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <span className="leading-snug">{store.address_details}</span>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* Área de Productos */}
+          <main className="flex flex-col min-h-[400px]">
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">
+                {selectedCategoryId === 'all' ? 'All' : categories.find(c => c.id === selectedCategoryId)?.name || 'Catálogo'}
+              </h2>
+              <span className="text-xs text-slate-400 font-bold uppercase">
+                {sortedProducts.length} {sortedProducts.length === 1 ? 'artículo' : 'artículos'}
+              </span>
+            </div>
+
+            {sortedProducts.length === 0 ? (
+              <div className="flex-1 flex flex-col md:flex-row items-center justify-center py-12 gap-8 text-center md:text-left max-w-xl mx-auto">
+                <div className="flex-shrink-0">
+                  <svg className="w-40 h-40 text-slate-300" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="30" y="110" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
+                    <line x1="30" y1="125" x2="90" y2="125" stroke="currentColor" strokeWidth="2.5" />
+                    <rect x="50" y="138" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <rect x="100" y="110" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
+                    <line x1="100" y1="125" x2="160" y2="125" stroke="currentColor" strokeWidth="2.5" />
+                    <rect x="120" y="138" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <rect x="65" y="45" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
+                    <line x1="65" y1="60" x2="125" y2="60" stroke="currentColor" strokeWidth="2.5" />
+                    <rect x="85" y="73" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <path d="M123 42L150 90" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M128 45L153 88" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx="60" cy="30" r="1.5" fill="currentColor" />
+                    <circle cx="50" cy="40" r="2.5" fill="currentColor" />
+                    <circle cx="160" cy="50" r="2" fill="currentColor" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-extrabold text-slate-800 tracking-tight">Ooops...</h3>
+                  <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                    We were unable to find an item with that name . Please try again.
+                  </p>
+                </div>
+              </div>
+            ) : viewLayout === 'instaview' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedProducts.map((prod) => (
+                  <div 
+                    key={prod.id}
+                    onClick={() => handleProductClick(prod)}
+                    className="border border-slate-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      {prod.images[0] ? (
+                        <div className="w-full aspect-square relative bg-slate-50 overflow-hidden border-b border-slate-50">
+                          <img 
+                            src={prod.images[0]} 
+                            alt={prod.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full aspect-square bg-slate-50 border-b border-slate-100 flex items-center justify-center text-slate-300">
+                          <ShoppingBag className="w-8 h-8" />
+                        </div>
+                      )}
+
+                      <div className="p-4 space-y-1.5">
+                        <h4 className="font-bold text-slate-900 group-hover:text-secondary transition-colors text-xs truncate">
+                          {prod.title}
+                        </h4>
+                        {prod.description && (
+                          <p className="text-[10px] text-slate-500 line-clamp-2 leading-normal">
+                            {prod.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 pt-0 flex justify-between items-center">
+                      <span className="font-extrabold text-slate-900 text-xs">{formatPrice(prod.price)}</span>
+                      <button className="px-3 py-1 bg-slate-950 group-hover:bg-secondary text-white rounded text-[10px] font-bold uppercase transition-colors">
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedProducts.map((prod) => (
+                  <div 
+                    key={prod.id}
+                    onClick={() => handleProductClick(prod)}
+                    className="border border-slate-100 rounded-xl bg-white p-4 hover:shadow-md cursor-pointer transition-all flex items-center gap-4 justify-between group"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      {prod.images[0] ? (
+                        <img 
+                          src={prod.images[0]} 
+                          alt={prod.title} 
+                          className="w-14 h-14 rounded-lg object-cover border border-slate-50 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
+                          <ShoppingBag className="w-5 h-5" />
+                        </div>
+                      )}
+
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="font-bold text-slate-900 group-hover:text-secondary transition-colors text-xs truncate">
+                          {prod.title}
+                        </h4>
+                        {prod.description && (
+                          <p className="text-[10px] text-slate-500 line-clamp-1 leading-normal">
+                            {prod.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <span className="font-extrabold text-slate-900 text-xs">{formatPrice(prod.price)}</span>
+                      <button className="px-3 py-1 bg-slate-950 group-hover:bg-secondary text-white rounded text-[10px] font-bold uppercase transition-colors">
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </main>
+        </div>
+
+        {/* Pie de Página */}
+        <footer className="mt-auto py-8 bg-slate-50 border-t border-slate-100 flex flex-col items-center justify-center gap-2 px-8 text-center text-[10px] text-slate-400">
+          <p className="max-w-3xl leading-relaxed">
+            Security tip: Avoid scams. Do not pay for items in advance if you do not know the seller. All items and offers listed are the responsibility of <span className="font-bold text-slate-600">{store.name}</span>
+          </p>
+          <p className="font-bold mt-2">
+            Developed by <span className="text-secondary">Plataforma Ramos</span>
+          </p>
+        </footer>
+      </div>
 
       {/* 4. BARRA FLOTANTE CARRITO */}
       {cart.items.length > 0 && (
