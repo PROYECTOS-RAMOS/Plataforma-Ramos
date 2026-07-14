@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { updateSession } from './src/lib/supabase/middleware'
+import { updateSession } from './lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   // 1. Refrescar sesión de Supabase Auth
@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
     tenantDomain = hostname.replace('.' + rootDomainName, '')
   }
 
-  // Si la ruta ya empieza con el dominio del inquilino (evitar bucle de reescritura en pasadas secundarias de Next.js)
+  // Si la ruta ya empieza con el dominio del inquilino (evitar bucle de reescritura en pasadas de Next.js)
   if (path.startsWith(`/${tenantDomain}`)) {
     return supabaseResponse
   }
