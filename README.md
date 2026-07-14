@@ -375,13 +375,38 @@ create trigger trigger_shipping_rules_updated_at
     for each row execute function public.handle_updated_at();
 
 -- ----------------------------------------------------
+-- 7.5 TABLA: CUSTOMERS (Directorio de Clientes / Compradores)
+-- ----------------------------------------------------
+create table public.customers (
+    id uuid default gen_random_uuid() primary key,
+    store_id uuid references public.stores(id) on delete cascade not null,
+    name text not null,
+    phone text not null,                         -- Formato E.164 (identificador clave en WhatsApp)
+    email text,
+    address text,
+    notes text,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+
+    constraint customer_phone_format check (phone ~* '^\+[1-9]\d{1,14}$'),
+    unique(store_id, phone)
+);
+
+create index idx_customers_store_id_phone on public.customers(store_id, phone);
+
+create trigger trigger_customers_updated_at
+    before update on public.customers
+    for each row execute function public.handle_updated_at();
+
+-- ----------------------------------------------------
 -- 8. TABLA: ORDERS (Registro general de pedidos)
 -- ----------------------------------------------------
 create table public.orders (
     id uuid default gen_random_uuid() primary key,
     store_id uuid references public.stores(id) on delete cascade not null,
-    customer_name text not null,
-    customer_phone text not null,
+    customer_id uuid references public.customers(id) on delete set null, -- Enlace relacional con el cliente
+    customer_name text not null,                 -- Respaldo de texto por integridad
+    customer_phone text not null,                -- Respaldo de texto por integridad
     shipping_rule_id uuid references public.shipping_rules(id) on delete set null,
     shipping_price numeric(10, 2) default 0.00 not null check (shipping_price >= 0),
     subtotal numeric(10, 2) not null check (subtotal >= 0),
@@ -394,6 +419,7 @@ create table public.orders (
 );
 
 create index idx_orders_store_id_created on public.orders(store_id, created_at desc);
+create index idx_orders_customer_id on public.orders(customer_id) where customer_id is not null;
 
 -- ----------------------------------------------------
 -- 9. TABLA: ORDER_ITEMS (Productos individuales comprados en cada orden - Desacoplado)
@@ -489,6 +515,7 @@ alter table public.profiles enable row level security;
 alter table public.plans enable row level security;
 alter table public.stores enable row level security;
 alter table public.store_members enable row level security;
+alter table public.customers enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.product_options enable row level security;
@@ -532,6 +559,19 @@ create policy "Los dueños o admins de la tienda pueden gestionar miembros" on p
 
 create policy "Los miembros activos de la tienda pueden ver los colaboradores" on public.store_members
     for select using (public.is_store_collaborator(store_id, 'viewer'));
+
+-- Políticas para Customers (Directorio de Clientes)
+create policy "Los compradores pueden registrar su informacion de cliente" on public.customers
+    for insert with check (true);
+
+create policy "Los dueños o colaboradores autorizados pueden ver clientes" on public.customers
+    for select using (public.is_store_collaborator(store_id, 'viewer'));
+
+create policy "Los dueños o editores pueden actualizar informacion de clientes" on public.customers
+    for update using (public.is_store_collaborator(store_id, 'editor'));
+
+create policy "Los dueños o admins pueden eliminar clientes" on public.customers
+    for delete using (public.is_store_collaborator(store_id, 'admin'));
 
 -- Políticas para Categories
 create policy "Cualquiera puede ver categorias de tiendas activas" on public.categories
@@ -716,6 +756,17 @@ El panel del vendedor (`app.tuplataforma.com`) estará estructurado en **5 secci
     *   Nombre de la zona de cobertura (ej. "Envío express casco urbano").
     *   Costo de entrega (ej. $3.00 USD).
     *   Monto mínimo para aplicar envío gratis (ej. Gratis en compras mayores a $50.00 USD).
+
+### 4.5 Directorio de Clientes (CRM Ligero)
+*   **Bandeja de Clientes:** Listado de los compradores que han realizado pedidos en la tienda, indexados automáticamente por su número de WhatsApp.
+*   **Ficha Detallada del Cliente:** Modal que expone:
+    *   Información de contacto (Nombre, Teléfono, Email y Dirección de entrega predeterminada).
+    *   *Métricas de Fidelización:* Cantidad total de compras realizadas, total de dinero gastado en la tienda, y fecha del último pedido.
+    *   *Historial de Órdenes:* Historial interactivo de los pedidos realizados anteriormente por este cliente.
+*   **Acciones Operativas:**
+    *   Botón *"Chat directo en WhatsApp"*: Abre una conversación rápida con el comprador en su celular.
+    *   Botón *"Llamar"* (enlace `tel:`): Inicia una llamada telefónica directa.
+    *   *Notas Internas:* Campo de texto editable para agregar observaciones (ej. "Cliente VIP", "Entrega en portería con el celador").
 
 ### 5. Ajustes y Personalización de Tienda
 *   **Datos de Contacto:** Modificación de WhatsApp receptor (`whatsapp_phone`), slug URL (subdominio) y datos de marca.
