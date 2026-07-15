@@ -46,6 +46,7 @@ interface Option {
 interface Product {
   id: string
   title: string
+  slug: string
   description: string | null
   price: number
   images: string[]
@@ -117,6 +118,20 @@ export default function StorefrontClient({ store, categories, products, shipping
   // Carga de procesamiento
   const [processing, setProcessing] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+
+  // Detección de host para enlaces limpios (evitar duplicar slug en subdominios)
+  const [isSubdomain, setIsSubdomain] = useState(false)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      const isBase = host === 'rutaslima.app' || host === 'www.rutaslima.app' || host === 'localhost'
+      setIsSubdomain(!isBase)
+    }
+  }, [])
+
+  const getProductLink = (productSlug: string) => {
+    return isSubdomain ? `/product/${productSlug}` : `/${store.slug}/product/${productSlug}`
+  }
 
   const cart = useCart()
   const supabase = createClient()
@@ -432,7 +447,7 @@ export default function StorefrontClient({ store, categories, products, shipping
               {sortedProducts.map((prod) => (
                 <Link 
                   key={prod.id} 
-                  href={`/${store.slug}/product/${prod.id}`}
+                  href={getProductLink(prod.slug)}
                   className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 cursor-pointer transition-all shadow-sm group"
                 >
                   {prod.images[0] ? (
@@ -716,7 +731,7 @@ export default function StorefrontClient({ store, categories, products, shipping
                 {sortedProducts.map((prod) => (
                   <Link 
                     key={prod.id}
-                    href={`/${store.slug}/product/${prod.id}`}
+                    href={getProductLink(prod.slug)}
                     className="border border-slate-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
                   >
                     <div>
@@ -760,7 +775,7 @@ export default function StorefrontClient({ store, categories, products, shipping
                 {sortedProducts.map((prod) => (
                   <Link 
                     key={prod.id}
-                    href={`/${store.slug}/product/${prod.id}`}
+                    href={getProductLink(prod.slug)}
                     className="border border-slate-100 rounded-xl bg-white p-4 hover:shadow-md cursor-pointer transition-all flex items-center gap-4 justify-between group"
                   >
                     <div className="flex items-center gap-4 min-w-0">

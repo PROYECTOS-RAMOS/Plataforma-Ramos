@@ -17,6 +17,7 @@ interface Product {
   id: string
   category_id: string | null
   title: string
+  slug: string
   description: string | null
   price: number
   images: string[]
@@ -210,11 +211,19 @@ export default function ProductsClient({ store, initialCategories, initialProduc
     setLoadingProd(true)
     const imagesArray = prodImageUrl.trim() ? [prodImageUrl.trim()] : []
 
+    // Generar un slug limpio
+    const generatedSlug = prodTitle.trim().toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
+
     if (selectedProduct) {
       const { data, error } = await supabase
         .from('products')
         .update({
           title: prodTitle.trim(),
+          slug: generatedSlug,
           description: prodDesc.trim() || null,
           price: parseFloat(prodPrice),
           category_id: prodCatId || null,
@@ -237,6 +246,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
         .insert({
           store_id: store.id,
           title: prodTitle.trim(),
+          slug: generatedSlug,
           description: prodDesc.trim() || null,
           price: parseFloat(prodPrice),
           category_id: prodCatId || null,

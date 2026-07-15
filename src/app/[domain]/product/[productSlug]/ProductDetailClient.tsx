@@ -34,6 +34,7 @@ interface Option {
 interface Product {
   id: string
   title: string
+  slug: string
   description: string | null
   price: number
   images: string[]
@@ -71,6 +72,20 @@ export default function ProductDetailClient({ store, product, categories }: Prod
   const [quantity, setQuantity] = useState(1)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
+
+  // Detección de host para enlaces de retorno limpios
+  const [isSubdomain, setIsSubdomain] = useState(false)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      const isBase = host === 'rutaslima.app' || host === 'www.rutaslima.app' || host === 'localhost'
+      setIsSubdomain(!isBase)
+    }
+  }, [])
+
+  const getCatalogLink = () => {
+    return isSubdomain ? '/' : `/${store.slug}`
+  }
 
   // Formateador de precios de la tienda
   const formatPrice = (amount: number) => {
@@ -146,7 +161,7 @@ export default function ProductDetailClient({ store, product, categories }: Prod
       {/* Cabecera / Barra de Navegación */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3.5 flex justify-between items-center">
         <Link 
-          href={`/${store.slug}`}
+          href={getCatalogLink()}
           className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100/60"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -154,7 +169,7 @@ export default function ProductDetailClient({ store, product, categories }: Prod
         </Link>
         <h1 className="font-extrabold text-sm text-slate-800 tracking-tight">{store.name}</h1>
         <Link
-          href={`/${store.slug}?cart=open`}
+          href={`${getCatalogLink()}?cart=open`}
           className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all"
         >
           <ShoppingBag className="w-4.5 h-4.5" />
@@ -331,7 +346,7 @@ export default function ProductDetailClient({ store, product, categories }: Prod
 
               {/* Botón directo de Checkout */}
               <Link
-                href={`/${store.slug}?cart=open`}
+                href={`${getCatalogLink()}?cart=open`}
                 className="block text-center border border-slate-200 hover:border-slate-300 text-slate-700 font-extrabold py-3 rounded-2xl text-xs transition-all shadow-sm bg-white"
               >
                 Ver Carrito y Pagar

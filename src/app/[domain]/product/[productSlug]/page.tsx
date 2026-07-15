@@ -5,12 +5,12 @@ import ProductDetailClient from './ProductDetailClient'
 interface ProductPageProps {
   params: Promise<{
     domain: string
-    productId: string
+    productSlug: string
   }>
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { domain, productId } = await params
+  const { domain, productSlug } = await params
   const supabase = await createClient()
 
   // 1. Obtener la tienda activa
@@ -25,7 +25,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  // 2. Obtener el producto específico con sus opciones y variantes
+  // 2. Obtener el producto específico por slug con sus opciones y variantes
   const { data: product } = await supabase
     .from('products')
     .select(`
@@ -37,7 +37,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         )
       )
     `)
-    .eq('id', productId)
+    .eq('slug', productSlug)
     .eq('store_id', store.id)
     .eq('is_available', true)
     .single()
