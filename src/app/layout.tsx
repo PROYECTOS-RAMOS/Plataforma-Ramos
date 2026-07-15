@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { ViewTransitions } from 'next-view-transitions'
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -30,6 +31,7 @@ export default function RootLayout({
         <body className="min-h-full flex flex-col">
           {children}
           <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ViewTransitions>
