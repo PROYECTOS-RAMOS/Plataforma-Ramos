@@ -430,9 +430,9 @@ export default function StorefrontClient({ store, categories, products, shipping
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {sortedProducts.map((prod) => (
-                <div 
+                <Link 
                   key={prod.id} 
-                  onClick={() => handleProductClick(prod)}
+                  href={`/${store.slug}/product/${prod.id}`}
                   className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 cursor-pointer transition-all shadow-sm group"
                 >
                   {prod.images[0] ? (
@@ -458,12 +458,19 @@ export default function StorefrontClient({ store, categories, products, shipping
                     )}
                     <div className="flex justify-between items-center pt-1">
                       <span className="font-extrabold text-slate-900 text-sm">{formatPrice(prod.price)}</span>
-                      <button className="p-1 bg-slate-900 text-white rounded-full group-hover:bg-[var(--tenant-primary)] transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleProductClick(prod)
+                        }}
+                        className="p-1 bg-slate-900 text-white rounded-full group-hover:bg-[var(--tenant-primary)] transition-colors"
+                      >
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
