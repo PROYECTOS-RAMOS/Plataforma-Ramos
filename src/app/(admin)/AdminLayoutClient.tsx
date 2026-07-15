@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'next-view-transitions'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { motion, AnimatePresence } from 'framer-motion'
+import AnimatePage from '@/components/ui/AnimatePage'
 
 interface AdminLayoutClientProps {
   profile: {
@@ -143,15 +145,32 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
         <SidebarContent />
       </aside>
 
-      {/* Sidebar Móvil (Drawer) */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/60" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="relative flex flex-col w-[280px] max-w-xs h-full bg-surface border-r border-border-subtle">
-            <SidebarContent />
-          </aside>
-        </div>
-      )}
+      {/* Sidebar Móvil (Drawer animado) */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop oscuro */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60" 
+              onClick={() => setMobileMenuOpen(false)} 
+            />
+            {/* Sidebar deslizante */}
+            <motion.aside 
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="relative flex flex-col w-[280px] max-w-xs h-full bg-surface border-r border-border-subtle z-10"
+            >
+              <SidebarContent />
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Contenido Principal de Trabajo */}
       <div className="flex-1 flex flex-col md:ml-[280px] min-h-screen">
@@ -172,7 +191,9 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
 
         <main className="flex-1 p-6 md:p-8 bg-surface-container-low overflow-y-auto">
           <div className="max-w-6xl mx-auto w-full">
-            {children}
+            <AnimatePage key={pathname}>
+              {children}
+            </AnimatePage>
           </div>
         </main>
       </div>

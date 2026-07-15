@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useOptimistic } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Category {
   id: string
@@ -36,6 +37,12 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products')
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [products, setProducts] = useState<Product[]>(initialProducts)
+
+  const [optimisticProducts, setOptimisticProducts] = useOptimistic(
+    products,
+    (state, update: { id: string; is_available: boolean }) =>
+      state.map((p) => (p.id === update.id ? { ...p, is_available: update.is_available } : p))
+  )
 
   // Estados Categorías
   const [newCatName, setNewCatName] = useState('')
@@ -249,13 +256,16 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   }
 
   const handleToggleProductAvailable = async (prodId: string, currentStatus: boolean) => {
+    const nextStatus = !currentStatus
+    setOptimisticProducts({ id: prodId, is_available: nextStatus })
+
     const { error } = await supabase
       .from('products')
-      .update({ is_available: !currentStatus })
+      .update({ is_available: nextStatus })
       .eq('id', prodId)
 
     if (!error) {
-      setProducts((prev) => prev.map((p) => p.id === prodId ? { ...p, is_available: !currentStatus } : p))
+      setProducts((prev) => prev.map((p) => p.id === prodId ? { ...p, is_available: nextStatus } : p))
     }
   }
 
@@ -318,7 +328,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       {/* PESTAÑA: PRODUCTOS (Diseño Grid de Tarjetas de Stitch) */}
       {activeTab === 'products' && (
         <>
-          {products.length === 0 ? (
+          {optimisticProducts.length === 0 ? (
             <div className="text-center py-16 text-slate-400 border border-dashed border-border-subtle rounded-lg bg-white">
               <span className="material-symbols-outlined text-[40px] text-slate-200 mx-auto mb-2 block">inventory_2</span>
               <div className="font-bold text-sm text-slate-700">No hay productos en tu catálogo</div>
@@ -326,7 +336,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => {
+              {optimisticProducts.map((product) => {
                 const categoryName = categories.find((c) => c.id === product.category_id)?.name || 'Sin categoría'
                 return (
                   <div 
@@ -352,15 +362,22 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                         </div>
                       )}
                       
-                      {/* Tag de estado */}
-                      <div className="absolute top-2 right-2 bg-surface/90 backdrop-blur-sm px-2.5 py-0.5 rounded border border-border-subtle flex items-center gap-1.5">
+                      {/* Botón interactivo de estado rápido */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleProductAvailable(product.id, product.is_available)
+                        }}
+                        className="absolute top-2 right-2 bg-white/90 hover:bg-white transition-colors backdrop-blur-sm px-2.5 py-1 rounded border border-border-subtle flex items-center gap-1.5 z-10 cursor-pointer shadow-sm"
+                        title={product.is_available ? "Ocultar del catálogo" : "Mostrar en catálogo"}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${
-                          product.is_available ? 'bg-status-completed' : 'bg-surface-variant'
+                          product.is_available ? 'bg-emerald-500' : 'bg-slate-400'
                         }`}></span>
-                        <span className="text-[9px] font-bold text-on-surface uppercase tracking-wider">
+                        <span className="text-[9px] font-bold text-slate-700 uppercase tracking-wider">
                           {product.is_available ? 'Activo' : 'Oculto'}
                         </span>
-                      </div>
+                      </button>
                     </div>
 
                     {/* Detalles */}
@@ -543,11 +560,27 @@ export default function ProductsClient({ store, initialCategories, initialProduc
         </div>
       )}
 
-      {/* Modal / Dialog de Producto (Crear / Editar) */}
-      {isProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60" onClick={() => setIsProductModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-border-subtle max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+      {/* Modal / Dialog de Producto (Crear / Editar animado) */}
+      <AnimatePresence>
+        {isProductModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop oscuro con fade-in */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60" 
+              onClick={() => setIsProductModalOpen(false)} 
+            />
+            {/* Contenedor del Modal con resorte (spring) y desplazamiento */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative bg-white rounded-xl shadow-xl border border-border-subtle max-w-md w-full overflow-hidden z-10"
+            >
             
             <div className="flex justify-between items-center px-6 py-4 border-b border-border-subtle bg-slate-50">
               <h3 className="font-bold text-on-surface text-sm">
@@ -746,9 +779,10 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                 </Button>
               </div>
             </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   )
 }
