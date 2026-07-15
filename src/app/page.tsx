@@ -74,7 +74,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
           <h1 className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-tight leading-[1.05] text-white">
             Crea tu catálogo digital y recibe pedidos por{' '}
-            <span className="bg-gradient-to-r from-blue-500 via-white to-red-500 bg-clip-text text-transparent">
+            <span className="text-[#25D366]">
               WhatsApp
             </span>
           </h1>
