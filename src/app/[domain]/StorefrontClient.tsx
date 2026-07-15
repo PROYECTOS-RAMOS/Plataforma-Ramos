@@ -831,6 +831,8 @@ export default function StorefrontClient({ store, categories, products, shipping
       {cart.items.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-xl z-30 max-w-md mx-auto">
           <Button
+            id="btn-ver-carrito-flotante"
+            data-testid="ver-carrito-flotante"
             onClick={() => {
               setIsCartOpen(true)
               setIsCheckoutStep(false)
@@ -999,6 +1001,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                         <span className="font-black text-slate-900 text-base">{formatPrice(cartSubtotal)}</span>
                       </div>
                       <Button
+                        id="btn-continuar-checkout"
+                        data-testid="continuar-checkout"
                         onClick={() => setIsCheckoutStep(true)}
                         className="w-full bg-[var(--tenant-primary)] hover:opacity-90 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 shadow-md"
                       >
@@ -1023,6 +1027,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                     <div className="space-y-1.5">
                       <label className="block text-xs font-bold text-slate-700">Tu Nombre Completo</label>
                       <input
+                        id="input-customer-name"
+                        data-testid="customer-name"
                         type="text"
                         value={custName}
                         onChange={(e) => setCustName(e.target.value)}
@@ -1035,6 +1041,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                     <div className="space-y-1.5">
                       <label className="block text-xs font-bold text-slate-700">Tu Teléfono (WhatsApp)</label>
                       <input
+                        id="input-customer-phone"
+                        data-testid="customer-phone"
                         type="tel"
                         value={custPhone}
                         onChange={(e) => setCustPhone(e.target.value)}
@@ -1052,6 +1060,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                     <div className="flex gap-2">
                       {store.delivery_settings?.allow_pickup && (
                         <button
+                          id="btn-delivery-pickup"
+                          data-testid="delivery-pickup"
                           type="button"
                           onClick={() => setDeliveryType('pickup')}
                           className={`flex-1 p-3 border rounded-xl flex flex-col items-center gap-1.5 text-xs font-bold transition-all ${
@@ -1067,6 +1077,8 @@ export default function StorefrontClient({ store, categories, products, shipping
 
                       {store.delivery_settings?.allow_delivery && (
                         <button
+                          id="btn-delivery-shipping"
+                          data-testid="delivery-shipping"
                           type="button"
                           onClick={() => setDeliveryType('delivery')}
                           className={`flex-1 p-3 border rounded-xl flex flex-col items-center gap-1.5 text-xs font-bold transition-all ${
@@ -1087,6 +1099,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                         <div className="space-y-1.5">
                           <label className="block text-xs font-bold text-slate-700">Dirección Completa de Entrega</label>
                           <input
+                            id="input-customer-address"
+                            data-testid="customer-address"
                             type="text"
                             value={custAddress}
                             onChange={(e) => setCustAddress(e.target.value)}
@@ -1100,6 +1114,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                           <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-slate-700">Zona / Tarifa de Envío</label>
                             <select
+                              id="select-shipping-rule"
+                              data-testid="shipping-rule"
                               value={selectedShippingRuleId}
                               onChange={(e) => setSelectedShippingRuleId(e.target.value)}
                               className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] text-sm bg-white"
@@ -1157,6 +1173,8 @@ export default function StorefrontClient({ store, categories, products, shipping
                   </div>
 
                   <Button
+                    id="btn-confirmar-pedido"
+                    data-testid="confirmar-pedido"
                     type="submit"
                     disabled={processing}
                     className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 shadow-md"
