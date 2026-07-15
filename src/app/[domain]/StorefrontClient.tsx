@@ -401,113 +401,167 @@ export default function StorefrontClient({ store, categories, products, shipping
   return (
     <div className="flex-1 flex flex-col min-h-screen">
       
-      {/* 1. DISEÑO MÓVIL (VERSIÓN STITCH) */}
-      <div className="md:hidden flex-1 flex flex-col w-full max-w-md mx-auto bg-white min-h-screen shadow-lg border-x border-slate-100 relative pb-20">
-        {/* HEADER TIENDA */}
-        <header className="p-6 text-center space-y-3 bg-slate-50 border-b border-slate-100 flex flex-col items-center">
-          <div className="w-14 h-14 rounded-full bg-[var(--tenant-primary)] overflow-hidden shadow-md border-2 border-white flex items-center justify-center">
-            {store.logo_url ? (
-              <img src={getOptimizedImageUrl(store.logo_url, { width: 120, height: 120 })} alt={store.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white font-black text-xl">{store.name.charAt(0).toUpperCase()}</span>
-            )}
+      {/* 1. DISEÑO MÓVIL PREMIUM */}
+      <div className="md:hidden flex-1 flex flex-col w-full bg-white min-h-screen relative pb-24">
+        
+        {/* HEADER COMPACTO MÓVIL — Glassmorphism sticky */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-100/80 shadow-sm">
+          <div className="flex items-center justify-between px-4 h-14">
+            {/* Logo + Nombre */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-[var(--tenant-primary)] overflow-hidden shadow-sm border-2 border-white flex items-center justify-center flex-shrink-0">
+                {store.logo_url ? (
+                  <img src={getOptimizedImageUrl(store.logo_url, { width: 80, height: 80 })} alt={store.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-black text-sm">{store.name.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight truncate">{store.name}</h1>
+            </div>
+
+            {/* Acciones: Búsqueda + Carrito */}
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setSearchQuery(searchQuery ? '' : ' ')}
+                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="Buscar"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <button
+                id="btn-carrito-header-mobile"
+                data-testid="carrito-header-mobile"
+                onClick={() => {
+                  if (cart.items.length > 0) {
+                    setIsCartOpen(true)
+                    setIsCheckoutStep(false)
+                  }
+                }}
+                className="relative p-2 rounded-full text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                {cart.items.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[var(--tenant-primary)] text-white rounded-full flex items-center justify-center text-[10px] font-black animate-in zoom-in duration-200">
+                    {cart.items.reduce((acc, i) => acc + i.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">{store.name}</h1>
-            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Realiza tu orden rápido y envíala a nuestro WhatsApp.</p>
-          </div>
+
+          {/* Buscador expandible */}
+          {searchQuery !== '' && (
+            <div className="px-4 pb-3 animate-in slide-in-from-top duration-200">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchQuery === ' ' ? '' : searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value || ' ')}
+                  placeholder="Buscar productos..."
+                  className="w-full pl-9 pr-10 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] focus:border-transparent text-sm bg-slate-50/80"
+                />
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
-        {/* BUSCADOR & CATEGORÍAS */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md z-20 py-3 border-b border-slate-100 space-y-3 px-4">
+        {/* CATEGORÍAS — Pills horizontales con gradient fade */}
+        <div className="sticky top-14 bg-white/95 backdrop-blur-md z-20 border-b border-slate-100/60">
           <div className="relative">
-            <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar en el catálogo..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] focus:border-transparent text-sm bg-slate-50/50"
-            />
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4">
-            <button
-              onClick={() => setSelectedCategoryId('all')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                selectedCategoryId === 'all'
-                  ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-sm'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
-            >
-              Todos
-            </button>
-            {categories.map((cat) => (
+            {/* Gradient fade en los bordes */}
+            <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            
+            <div className="flex gap-2 overflow-x-auto py-3 px-5 no-scrollbar">
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                  selectedCategoryId === cat.id
-                    ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-sm'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                onClick={() => setSelectedCategoryId('all')}
+                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border flex-shrink-0 ${
+                  selectedCategoryId === 'all'
+                    ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-md scale-[1.02]'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                {cat.name}
+                ✨ Todos
               </button>
-            ))}
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border flex-shrink-0 ${
+                    selectedCategoryId === cat.id
+                      ? 'bg-[var(--tenant-primary)] border-transparent text-white shadow-md scale-[1.02]'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* LISTADO DE PRODUCTOS MÓVIL */}
-        <main className="p-4 flex-1">
+        {/* GRID DE PRODUCTOS MÓVIL — 2 Columnas estilo Shopify */}
+        <main className="p-3 flex-1">
           {sortedProducts.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
-              <ShoppingBag className="w-12 h-12 text-slate-200 mx-auto mb-2" />
+            <div className="text-center py-20 text-slate-400">
+              <ShoppingBag className="w-12 h-12 text-slate-200 mx-auto mb-3" />
               <div className="font-bold text-sm text-slate-700">Sin productos disponibles</div>
-              <p className="text-xs text-slate-500 mt-1">Vuelve a revisar la búsqueda o las categorías.</p>
+              <p className="text-xs text-slate-500 mt-1.5">Intenta otra búsqueda o categoría.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {sortedProducts.map((prod) => (
+            <div className="grid grid-cols-2 gap-3">
+              {sortedProducts.map((prod, index) => (
                 <Link 
                   key={prod.id} 
                   href={getProductLink(prod.slug)}
-                  className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 cursor-pointer transition-all shadow-sm group"
+                  className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  {prod.images[0] ? (
-                    <img
-                      src={getOptimizedImageUrl(prod.images[0], { width: 160, height: 160 })}
-                      alt={prod.title}
-                      className="w-20 h-20 rounded-lg object-cover border border-slate-50 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
-                      <ShoppingBag className="w-6 h-6" />
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="font-bold text-slate-900 group-hover:text-[var(--tenant-primary)] transition-colors text-sm truncate">
+                  {/* Imagen cuadrada */}
+                  <div className="relative aspect-square bg-slate-50 overflow-hidden">
+                    {prod.images[0] ? (
+                      <img
+                        src={getOptimizedImageUrl(prod.images[0], { width: 300, height: 300 })}
+                        alt={prod.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-200">
+                        <ShoppingBag className="w-8 h-8" />
+                      </div>
+                    )}
+                    {/* Botón + superpuesto */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleProductClick(prod)
+                      }}
+                      className="absolute bottom-2 right-2 w-8 h-8 bg-[var(--tenant-primary)] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Info del producto */}
+                  <div className="p-3 flex flex-col gap-1 flex-1">
+                    <h3 className="font-bold text-slate-800 text-[13px] leading-tight line-clamp-2 group-hover:text-[var(--tenant-primary)] transition-colors">
                       {prod.title}
-                    </div>
+                    </h3>
                     {prod.description && (
-                      <p className="text-xs text-slate-500 line-clamp-2 leading-snug">
+                      <p className="text-[11px] text-slate-400 line-clamp-1 leading-snug">
                         {prod.description}
                       </p>
                     )}
-                    <div className="flex justify-between items-center pt-1">
-                      <span className="font-extrabold text-slate-900 text-sm">{formatPrice(prod.price)}</span>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleProductClick(prod)
-                        }}
-                        className="p-1 bg-slate-900 text-white rounded-full group-hover:bg-[var(--tenant-primary)] transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <span className="font-black text-slate-900 text-sm mt-auto pt-1">
+                      {formatPrice(prod.price)}
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -516,207 +570,168 @@ export default function StorefrontClient({ store, categories, products, shipping
         </main>
       </div>
 
-      {/* 2. DISEÑO DE ESCRITORIO (VERSIÓN KYTE) */}
-      <div className="hidden md:flex flex-col flex-1 min-h-screen bg-white">
-        {/* Cabecera Superior */}
-        <header className="sticky top-0 bg-white border-b border-slate-100 h-16 flex items-center px-8 justify-between z-30 shadow-sm">
-          {/* Caja de Búsqueda */}
-          <div className="relative w-80">
-            <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for items"
-              className="w-full pl-9 pr-4 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-transparent text-xs bg-slate-50/50"
-            />
-          </div>
-
-          {/* Nombre de la Tienda (Centro) */}
-          <div className="flex items-center justify-center gap-2.5">
+                  {/* 2. DISEÑO DE ESCRITORIO PREMIUM */}
+      <div className="hidden md:flex flex-col flex-1 min-h-screen bg-slate-50/50">
+        {/* Cabecera Superior con Backdrop Blur */}
+        <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 h-16 flex items-center px-12 justify-between z-30 shadow-sm">
+          {/* Logo + Nombre */}
+          <div className="flex items-center gap-3">
             {store.logo_url && (
               <img
-                src={getOptimizedImageUrl(store.logo_url, { width: 80, height: 80 })}
+                src={getOptimizedImageUrl(store.logo_url, { width: 100, height: 100 })}
                 alt={store.name}
-                className="w-8 h-8 rounded-lg object-cover border border-slate-100 shadow-sm flex-shrink-0"
+                className="w-9 h-9 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0"
               />
             )}
-            <h1 className="text-xl font-bold tracking-tight text-secondary text-[18px] uppercase">
+            <h1 className="text-lg font-black tracking-tight text-slate-800 uppercase">
               {store.name}
             </h1>
           </div>
 
-          {/* Perfil y Carrito */}
-          <div className="flex items-center gap-6">
+          {/* Caja de Búsqueda Centrada */}
+          <div className="relative w-96">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery === ' ' ? '' : searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value || ' ')}
+              placeholder="Buscar productos en el catálogo..."
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)]/20 focus:border-[var(--tenant-primary)] text-sm bg-slate-50/50 hover:bg-slate-50 transition-colors"
+            />
+          </div>
+
+          {/* Carrito de Compra */}
+          <div className="flex items-center gap-4">
             <button 
+              id="btn-open-cart-desktop"
+              data-testid="open-cart-desktop"
               onClick={() => {
                 if (cart.items.length > 0) {
                   setIsCartOpen(true)
                   setIsCheckoutStep(false)
                 }
               }}
-              className="relative text-slate-700 hover:text-slate-900 flex items-center gap-1 text-xs font-bold"
+              className="relative bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-md active:scale-95"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>CARRITO ({cart.items.reduce((acc, i) => acc + i.quantity, 0)})</span>
+              <span>Carrito ({cart.items.reduce((acc, i) => acc + i.quantity, 0)})</span>
               {cart.items.length > 0 && (
-                <span className="absolute -top-2.5 -right-2.5 bg-secondary text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                <span className="bg-[var(--tenant-primary)] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black animate-bounce">
                   {cart.items.length}
                 </span>
               )}
             </button>
-
-            <span className="text-slate-200">|</span>
-
-            <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-slate-700">LOGIN OR CREATE ACCOUNT</span>
-              <span className="material-symbols-outlined text-[20px] text-slate-500">account_circle</span>
-            </div>
           </div>
         </header>
 
-        {/* Cuerpo Principal */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr] px-8 py-8 gap-8">
-          {/* Sidebar */}
-          <aside className="space-y-6 flex flex-col border-r border-slate-100 pr-8">
-            {/* Categorías */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Categories</h3>
-              <ul className="space-y-1.5">
-                <li>
-                  <button 
-                    onClick={() => setSelectedCategoryId('all')}
-                    className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
-                      selectedCategoryId === 'all' 
-                        ? 'font-bold text-slate-900' 
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>All</span>
-                    {selectedCategoryId === 'all' && <span className="text-xs">✓</span>}
-                  </button>
-                </li>
-                {categories.map((cat) => (
-                  <li key={cat.id}>
-                    <button 
-                      onClick={() => setSelectedCategoryId(cat.id)}
-                      className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
-                        selectedCategoryId === cat.id 
-                          ? 'font-bold text-slate-900' 
-                          : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{cat.name}</span>
-                      {selectedCategoryId === cat.id && <span className="text-xs">✓</span>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+        {/* Anuncio Marquee Superior */}
+        <div className="w-full h-9 bg-[var(--tenant-primary)] text-white flex items-center overflow-hidden relative z-10">
+          <div className="flex w-max animate-[marquee_25s_linear_infinite] whitespace-nowrap gap-8">
+            <div className="flex items-center gap-8 text-xs font-bold uppercase tracking-wider">
+              <span>⚡ ¡Haz tu pedido rápido y directo a nuestro WhatsApp!</span>
+              <span>✦</span>
+              <span>📦 Envíos a domicilio y retiro en tienda local</span>
+              <span>✦</span>
+              <span>💵 Pago fácil coordinado al instante</span>
+              <span>✦</span>
+              <span>💬 Soporte y atención al cliente garantizado</span>
+            </div>
+            {/* Copia duplicada para scroll infinito */}
+            <div className="flex items-center gap-8 text-xs font-bold uppercase tracking-wider" aria-hidden="true">
+              <span>⚡ ¡Haz tu pedido rápido y directo a nuestro WhatsApp!</span>
+              <span>✦</span>
+              <span>📦 Envíos a domicilio y retiro en tienda local</span>
+              <span>✦</span>
+              <span>💵 Pago fácil coordinado al instante</span>
+              <span>✦</span>
+              <span>💬 Soporte y atención al cliente garantizado</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra de Filtros e Inline Categorías (Reemplaza Sidebar) */}
+        <div className="bg-white border-b border-slate-100 py-4 px-12">
+          <div className="max-w-7xl mx-auto flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            {/* Categorías Inline */}
+            <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
+              <button
+                onClick={() => setSelectedCategoryId('all')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                  selectedCategoryId === 'all'
+                    ? 'bg-slate-900 border-transparent text-white shadow-sm'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                ✨ Todos los productos
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                    selectedCategoryId === cat.id
+                      ? 'bg-slate-900 border-transparent text-white shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
             </div>
 
-            {/* Ordenamiento (Sort by) */}
-            <div className="space-y-3 pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Sort by</h3>
-              <ul className="space-y-1.5">
-                {[
-                  { id: 'categories', label: 'Categories' },
-                  { id: 'lowest', label: 'Lowest price' },
-                  { id: 'highest', label: 'Highest price' },
-                  { id: 'az', label: 'A-Z' },
-                  { id: 'za', label: 'Z-A' }
-                ].map((option) => (
-                  <li key={option.id}>
-                    <button 
-                      onClick={() => setSortBy(option.id as any)}
-                      className={`w-full flex items-center justify-between text-left text-xs py-1 transition-colors ${
-                        sortBy === option.id 
-                          ? 'font-bold text-slate-900' 
-                          : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{option.label}</span>
-                      {sortBy === option.id && <span className="text-xs">✓</span>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Controles de Vista y Orden */}
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Selector de Orden */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ordenar por:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)]/20"
+                >
+                  <option value="categories">Por Categoría</option>
+                  <option value="lowest">Menor precio</option>
+                  <option value="highest">Mayor precio</option>
+                  <option value="az">Nombre A-Z</option>
+                  <option value="za">Nombre Z-A</option>
+                </select>
+              </div>
 
-            {/* Layout */}
-            <div className="space-y-3 pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Layout</h3>
-              <div className="flex gap-2">
+              {/* Selector de Layout */}
+              <div className="flex border border-slate-200 rounded-xl overflow-hidden p-0.5 bg-slate-50">
                 <button 
                   onClick={() => setViewLayout('instaview')}
-                  className={`flex-1 py-2 px-3 border rounded-md flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
+                  className={`p-1.5 rounded-lg transition-all ${
                     viewLayout === 'instaview' 
-                      ? 'border-slate-800 bg-slate-950 text-white' 
-                      : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300'
+                      ? 'bg-white text-slate-900 shadow-sm' 
+                      : 'text-slate-400 hover:text-slate-600'
                   }`}
+                  title="Cuadrícula"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Instaview</span>
+                  <LayoutGrid className="w-4 h-4" />
                 </button>
-
                 <button 
                   onClick={() => setViewLayout('list')}
-                  className={`flex-1 py-2 px-3 border rounded-md flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
+                  className={`p-1.5 rounded-lg transition-all ${
                     viewLayout === 'list' 
-                      ? 'border-slate-800 bg-slate-950 text-white' 
-                      : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300'
+                      ? 'bg-white text-slate-900 shadow-sm' 
+                      : 'text-slate-400 hover:text-slate-600'
                   }`}
+                  title="Lista"
                 >
-                  <List className="w-3.5 h-3.5" />
-                  <span>List</span>
+                  <List className="w-4 h-4" />
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Contacto */}
-            <div className="pt-6 border-t border-slate-100 space-y-3.5 text-xs text-slate-600 mt-auto">
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                <a href={`https://wa.me/${store.whatsapp_phone.replace('+', '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                  {store.whatsapp_phone}
-                </a>
-              </div>
-
-              {store.contact_email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-blue-600" />
-                  <a href={`mailto:${store.contact_email}`} className="hover:underline truncate">
-                    {store.contact_email}
-                  </a>
-                </div>
-              )}
-
-              {store.instagram_handle && (
-                <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-pink-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                  </svg>
-                  <a href={`https://instagram.com/${store.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {store.instagram_handle.startsWith('@') ? store.instagram_handle : `@${store.instagram_handle}`}
-                  </a>
-                </div>
-              )}
-
-              {store.address_details && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <span className="leading-snug">{store.address_details}</span>
-                </div>
-              )}
-            </div>
-          </aside>
-
-          {/* Área de Productos */}
+        {/* Contenido Principal Full Width */}
+        <div className="flex-grow max-w-7xl w-full mx-auto px-12 py-8">
           <main className="flex flex-col min-h-[400px]">
             <div className="mb-6 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">
-                {selectedCategoryId === 'all' ? 'All' : categories.find(c => c.id === selectedCategoryId)?.name || 'Catálogo'}
+              <h2 className="text-lg font-black text-slate-800 uppercase tracking-wider">
+                {selectedCategoryId === 'all' ? 'Catálogo Completo' : categories.find(c => c.id === selectedCategoryId)?.name || 'Catálogo'}
               </h2>
               <span className="text-xs text-slate-400 font-bold uppercase">
                 {sortedProducts.length} {sortedProducts.length === 1 ? 'artículo' : 'artículos'}
@@ -724,39 +739,22 @@ export default function StorefrontClient({ store, categories, products, shipping
             </div>
 
             {sortedProducts.length === 0 ? (
-              <div className="flex-1 flex flex-col md:flex-row items-center justify-center py-12 gap-8 text-center md:text-left max-w-xl mx-auto">
-                <div className="flex-shrink-0">
-                  <svg className="w-40 h-40 text-slate-300" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="30" y="110" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
-                    <line x1="30" y1="125" x2="90" y2="125" stroke="currentColor" strokeWidth="2.5" />
-                    <rect x="50" y="138" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <rect x="100" y="110" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
-                    <line x1="100" y1="125" x2="160" y2="125" stroke="currentColor" strokeWidth="2.5" />
-                    <rect x="120" y="138" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <rect x="65" y="45" width="60" height="60" rx="4" stroke="currentColor" strokeWidth="2.5" fill="white" />
-                    <line x1="65" y1="60" x2="125" y2="60" stroke="currentColor" strokeWidth="2.5" />
-                    <rect x="85" y="73" width="20" height="8" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <path d="M123 42L150 90" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M128 45L153 88" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                    <circle cx="60" cy="30" r="1.5" fill="currentColor" />
-                    <circle cx="50" cy="40" r="2.5" fill="currentColor" />
-                    <circle cx="160" cy="50" r="2" fill="currentColor" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-3xl font-extrabold text-slate-800 tracking-tight">Ooops...</h3>
-                  <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                    We were unable to find an item with that name . Please try again.
-                  </p>
-                </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
+                <ShoppingBag className="w-16 h-16 text-slate-200 mb-4 animate-bounce" />
+                <h3 className="text-lg font-bold text-slate-800">No encontramos productos</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Prueba seleccionando otra categoría o modificando los términos de búsqueda.
+                </p>
               </div>
             ) : viewLayout === 'instaview' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedProducts.map((prod) => (
+              /* Grid Premium de 4 columnas */
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {sortedProducts.map((prod, index) => (
                   <Link 
                     key={prod.id}
                     href={getProductLink(prod.slug)}
-                    className="border border-slate-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
+                    className="border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative"
+                    style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div>
                       {prod.images[0] ? (
@@ -764,63 +762,73 @@ export default function StorefrontClient({ store, categories, products, shipping
                           <img 
                             src={getOptimizedImageUrl(prod.images[0], { width: 400, height: 400 })} 
                             alt={prod.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
                           />
                         </div>
                       ) : (
                         <div className="w-full aspect-square bg-slate-50 border-b border-slate-100 flex items-center justify-center text-slate-300">
-                          <ShoppingBag className="w-8 h-8" />
+                          <ShoppingBag className="w-10 h-10" />
                         </div>
                       )}
 
-                      <div className="p-4 space-y-1.5">
-                        <h4 className="font-bold text-slate-900 group-hover:text-secondary transition-colors text-xs truncate">
+                      <div className="p-4 space-y-2">
+                        <h4 className="font-bold text-slate-800 group-hover:text-[var(--tenant-primary)] transition-colors text-[13px] leading-tight line-clamp-2">
                           {prod.title}
                         </h4>
                         {prod.description && (
-                          <p className="text-[10px] text-slate-500 line-clamp-2 leading-normal">
+                          <p className="text-[11px] text-slate-400 line-clamp-2 leading-normal">
                             {prod.description}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="p-4 pt-0 flex justify-between items-center">
-                      <span className="font-extrabold text-slate-900 text-xs">{formatPrice(prod.price)}</span>
-                      <button className="px-3 py-1 bg-slate-950 group-hover:bg-secondary text-white rounded text-[10px] font-bold uppercase transition-colors">
-                        Add
+                    <div className="p-4 pt-0 flex justify-between items-center mt-auto">
+                      <span className="font-black text-slate-900 text-sm">{formatPrice(prod.price)}</span>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleProductClick(prod)
+                        }}
+                        className="px-4 py-1.5 bg-slate-900 hover:bg-[var(--tenant-primary)] text-white rounded-xl text-[11px] font-bold uppercase transition-colors shadow-sm"
+                      >
+                        Añadir
                       </button>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {sortedProducts.map((prod) => (
+              /* Lista Premium */
+              <div className="space-y-4 max-w-4xl mx-auto w-full">
+                {sortedProducts.map((prod, index) => (
                   <Link 
                     key={prod.id}
                     href={getProductLink(prod.slug)}
-                    className="border border-slate-100 rounded-xl bg-white p-4 hover:shadow-md cursor-pointer transition-all flex items-center gap-4 justify-between group"
+                    className="border border-slate-100 rounded-2xl bg-white p-4 hover:shadow-lg transition-all duration-300 flex items-center gap-4 justify-between group"
+                    style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       {prod.images[0] ? (
                         <img 
-                          src={getOptimizedImageUrl(prod.images[0], { width: 120, height: 120 })} 
+                          src={getOptimizedImageUrl(prod.images[0], { width: 150, height: 150 })} 
                           alt={prod.title} 
-                          className="w-14 h-14 rounded-lg object-cover border border-slate-50 flex-shrink-0"
+                          className="w-16 h-16 rounded-xl object-cover border border-slate-50 flex-shrink-0 group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
-                          <ShoppingBag className="w-5 h-5" />
+                        <div className="w-16 h-16 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
+                          <ShoppingBag className="w-6 h-6" />
                         </div>
                       )}
 
                       <div className="space-y-1 min-w-0">
-                        <h4 className="font-bold text-slate-900 group-hover:text-secondary transition-colors text-xs truncate">
+                        <h4 className="font-bold text-slate-800 group-hover:text-[var(--tenant-primary)] transition-colors text-[13px] leading-tight line-clamp-1">
                           {prod.title}
                         </h4>
                         {prod.description && (
-                          <p className="text-[10px] text-slate-500 line-clamp-1 leading-normal">
+                          <p className="text-[11px] text-slate-400 line-clamp-1 leading-normal">
                             {prod.description}
                           </p>
                         )}
@@ -828,9 +836,16 @@ export default function StorefrontClient({ store, categories, products, shipping
                     </div>
 
                     <div className="flex items-center gap-4 flex-shrink-0">
-                      <span className="font-extrabold text-slate-900 text-xs">{formatPrice(prod.price)}</span>
-                      <button className="px-3 py-1 bg-slate-950 group-hover:bg-secondary text-white rounded text-[10px] font-bold uppercase transition-colors">
-                        Add
+                      <span className="font-black text-slate-900 text-sm">{formatPrice(prod.price)}</span>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleProductClick(prod)
+                        }}
+                        className="px-4 py-1.5 bg-slate-900 hover:bg-[var(--tenant-primary)] text-white rounded-xl text-[11px] font-bold uppercase transition-colors shadow-sm"
+                      >
+                        Añadir
                       </button>
                     </div>
                   </Link>
@@ -840,15 +855,85 @@ export default function StorefrontClient({ store, categories, products, shipping
           </main>
         </div>
 
-        {/* Pie de Página */}
-        <footer className="mt-auto py-8 bg-slate-50 border-t border-slate-100 flex flex-col items-center justify-center gap-2 px-8 text-center text-[10px] text-slate-400">
-          <p className="max-w-3xl leading-relaxed">
-            Security tip: Avoid scams. Do not pay for items in advance if you do not know the seller. All items and offers listed are the responsibility of <span className="font-bold text-slate-600">{store.name}</span>
-          </p>
-          <p className="font-bold mt-2">
-            Developed by <span className="text-secondary">Plataforma Ramos</span>
-          </p>
+        {/* Pie de Página Profesional de 3 Columnas */}
+        <footer className="bg-slate-900 text-slate-300 py-12 mt-auto border-t border-slate-800">
+          <div className="max-w-7xl mx-auto px-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Columna 1: Tienda */}
+            <div className="space-y-4">
+              <h3 className="text-white font-black uppercase tracking-wider text-sm">{store.name}</h3>
+              <p className="text-xs leading-relaxed text-slate-400">
+                Tu catálogo favorito en línea. Elige tus productos, personaliza tus variantes y envía tu orden directamente a nuestro WhatsApp.
+              </p>
+            </div>
+
+            {/* Columna 2: Contacto Dinámico */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">Contacto</h4>
+              <ul className="space-y-2 text-xs">
+                <li className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                  <a href={`https://wa.me/${store.whatsapp_phone.replace('+', '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    {store.whatsapp_phone}
+                  </a>
+                </li>
+                {store.contact_email && (
+                  <li className="flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-blue-400" />
+                    <a href={`mailto:${store.contact_email}`} className="hover:text-white transition-colors">
+                      {store.contact_email}
+                    </a>
+                  </li>
+                )}
+                {store.instagram_handle && (
+                  <li className="flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                    </svg>
+                    <a href={`https://instagram.com/${store.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                      {store.instagram_handle}
+                    </a>
+                  </li>
+                )}
+                {store.address_details && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-400 leading-snug">{store.address_details}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* Columna 3: Información Legal */}
+            <div className="space-y-4">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">Aviso Legal</h4>
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                Evita fraudes y estafas. No realices depósitos adelantados a vendedores que no conozcas. El vendedor es responsable exclusivo de los artículos publicados.
+              </p>
+              <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-800">
+                Desarrollado por <span className="text-[var(--tenant-primary)] font-bold">Plataforma Ramos</span>
+              </div>
+            </div>
+          </div>
         </footer>
+      </div>
+
+      {/* Botón Flotante Global de WhatsApp con Animación de Pulso */}
+      <div className="fixed bottom-6 right-6 z-40 flex items-center justify-center">
+        <span className="absolute inline-flex h-14 w-14 rounded-full bg-emerald-500 opacity-60 animate-ping"></span>
+        <a 
+          href={`https://api.whatsapp.com/send?phone=${store.whatsapp_phone.replace('+', '')}&text=Hola,%20quisiera%20hacer%20una%20consulta.`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300"
+          title="Consúltanos por WhatsApp"
+        >
+          <svg viewBox="0 0 32 32" fill="currentColor" className="h-7 w-7">
+            <path d="M19.11 17.22c-.27-.14-1.59-.78-1.84-.87-.25-.09-.43-.14-.61.14-.18.27-.7.86-.86 1.04-.16.18-.32.2-.59.07-.27-.14-1.15-.42-2.2-1.35-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.41.12-.55.12-.12.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47-.16-.01-.34-.01-.52-.01-.18 0-.48.07-.73.34-.25.27-.95.93-.95 2.27 0 1.34.98 2.64 1.11 2.82.14.18 1.93 2.95 4.69 4.13.66.28 1.17.45 1.57.58.66.21 1.26.18 1.73.11.53-.08 1.59-.65 1.82-1.28.23-.63.23-1.17.16-1.28-.07-.11-.25-.18-.52-.32z"></path>
+            <path d="M16.03 2.67c-7.16 0-12.98 5.82-12.98 12.98 0 2.29.61 4.53 1.77 6.51L3 29.33l7.35-1.92c1.91 1.05 4.06 1.6 6.26 1.6h.01c7.16 0 12.98-5.82 12.98-12.98 0-3.47-1.35-6.73-3.8-9.18-2.45-2.45-5.71-3.8-9.18-3.8zm0 23.99h-.01c-1.95 0-3.86-.52-5.53-1.51l-.4-.24-4.36 1.14 1.16-4.25-.26-.43c-1.07-1.72-1.64-3.71-1.64-5.76 0-6.12 4.98-11.1 11.1-11.1 2.97 0 5.76 1.15 7.86 3.25 2.1 2.1 3.25 4.89 3.25 7.86 0 6.12-4.98 11.1-11.1 11.1z"></path>
+          </svg>
+        </a>
       </div>
 
       {/* 4. BARRA FLOTANTE CARRITO */}
