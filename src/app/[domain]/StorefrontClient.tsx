@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Link } from 'next-view-transitions'
 import { useCart, CartItem } from '@/lib/store/useCart'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -118,6 +120,13 @@ export default function StorefrontClient({ store, categories, products, shipping
 
   const cart = useCart()
   const supabase = createClient()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams && searchParams.get('cart') === 'open') {
+      setIsCartOpen(true)
+    }
+  }, [searchParams])
 
   // Sincronizar el primer método de envío si hay reglas
   useEffect(() => {
@@ -698,9 +707,9 @@ export default function StorefrontClient({ store, categories, products, shipping
             ) : viewLayout === 'instaview' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedProducts.map((prod) => (
-                  <div 
+                  <Link 
                     key={prod.id}
-                    onClick={() => handleProductClick(prod)}
+                    href={`/${store.slug}/product/${prod.id}`}
                     className="border border-slate-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
                   >
                     <div>
@@ -736,15 +745,15 @@ export default function StorefrontClient({ store, categories, products, shipping
                         Add
                       </button>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
               <div className="space-y-4">
                 {sortedProducts.map((prod) => (
-                  <div 
+                  <Link 
                     key={prod.id}
-                    onClick={() => handleProductClick(prod)}
+                    href={`/${store.slug}/product/${prod.id}`}
                     className="border border-slate-100 rounded-xl bg-white p-4 hover:shadow-md cursor-pointer transition-all flex items-center gap-4 justify-between group"
                   >
                     <div className="flex items-center gap-4 min-w-0">
@@ -778,7 +787,7 @@ export default function StorefrontClient({ store, categories, products, shipping
                         Add
                       </button>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
