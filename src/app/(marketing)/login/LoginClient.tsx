@@ -10,6 +10,7 @@ import { Sparkles, Mail, Lock, Loader2, ArrowRight, CheckCircle2, AlertCircle } 
 export default function LoginClient() {
   const searchParams = useSearchParams()
   const mode = searchParams.get('mode')
+  const errorParam = searchParams.get('error')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +21,7 @@ export default function LoginClient() {
 
   const supabase = createClient()
 
-  // Sintonizar el formulario según el parámetro del query
+  // Sintonizar el formulario según el parámetro del query y errores de OAuth
   useEffect(() => {
     if (mode === 'signup') {
       setIsSignUp(true)
@@ -28,6 +29,12 @@ export default function LoginClient() {
       setIsSignUp(false)
     }
   }, [mode])
+
+  useEffect(() => {
+    if (errorParam === 'auth-callback-failed') {
+      setError('Tuvimos un inconveniente al conectar con tu cuenta de Google por un problema temporal de red. Por favor, intenta presionar "Acceder con Google" nuevamente para ingresar de inmediato.')
+    }
+  }, [errorParam])
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
