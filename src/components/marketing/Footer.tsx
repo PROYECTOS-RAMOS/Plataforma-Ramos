@@ -14,7 +14,7 @@ export default function Footer() {
             <span className="text-[#EF4444]">Plataforma</span>
             <span className="text-[#3B82F6]">Ramos</span>
           </span>
-          <Logo size={28} />
+          <Logo size={28} mirror />
         </div>
 
         <div className="text-slate-400">

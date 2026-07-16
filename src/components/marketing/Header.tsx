@@ -15,7 +15,7 @@ export default function Header() {
             <span className="text-[#EF4444]">Plataforma</span>
             <span className="text-[#3B82F6]">Ramos</span>
           </span>
-          <Logo size={40} className="group-hover:scale-105 transition-transform" />
+          <Logo size={40} mirror className="group-hover:scale-105 transition-transform" />
         </Link>
 
         {/* Navigation */}

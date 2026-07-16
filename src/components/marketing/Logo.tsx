@@ -5,9 +5,10 @@ import React from 'react'
 interface LogoProps {
   className?: string
   size?: number
+  mirror?: boolean
 }
 
-export default function Logo({ className = '', size = 40 }: LogoProps) {
+export default function Logo({ className = '', size = 40, mirror = false }: LogoProps) {
   return (
     <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
       <svg
@@ -15,6 +16,7 @@ export default function Logo({ className = '', size = 40 }: LogoProps) {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
+        style={mirror ? { transform: 'scaleX(-1)' } : undefined}
       >
         <style>
           {`
