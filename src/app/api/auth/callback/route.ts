@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   
-  // Capturar errores enviados directamente en la query por Supabase Auth (ej. cuenta ya existe con otro proveedor)
+  // Capturar errores de redirección de Supabase
   const errorName = searchParams.get('error')
   const errorDesc = searchParams.get('error_description')
   if (errorName) {
@@ -16,19 +16,22 @@ export async function GET(request: Request) {
 
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+  const flow = searchParams.get('flow') ?? 'signin' // signup o signin
 
   if (code) {
     const supabase = await createClient()
     
     let exchangeSuccess = false
     let lastError: any = null
+    let userData: any = null
 
     // Mecanismo de hasta 3 reintentos para mitigar la inestabilidad de red DNS/TCP en el primer fetch
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
           exchangeSuccess = true
+          userData = data
           break
         }
         lastError = error
@@ -41,11 +44,29 @@ export async function GET(request: Request) {
       }
     }
 
-    if (exchangeSuccess) {
+    if (exchangeSuccess && userData?.user) {
+      const user = userData.user
+      
+      // Control de flujo de Registro (Crear Cuenta) para Google OAuth
+      if (flow === 'signup') {
+        const createdAt = new Date(user.created_at).getTime()
+        // Comparar con last_sign_in_at para determinar si el usuario ya tenía cuenta previa
+        const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : createdAt
+        const diffSeconds = Math.abs(lastSignIn - createdAt) / 1000
+        
+        // Si el usuario tiene cuenta desde hace más de 8 segundos, se considera existente
+        if (diffSeconds > 8) {
+          // Desloguear la sesión del servidor para bloquear el acceso directo al panel
+          await supabase.auth.signOut()
+          return NextResponse.redirect(
+            `${origin}/login?error=account_exists_google&email=${encodeURIComponent(user.email || '')}`
+          )
+        }
+      }
+      
       return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error('Error definitivo al intercambiar código por sesión tras 3 intentos:', lastError)
-      // Si el error del intercambio es por cuenta existente u otro error conocido, lo pasamos
       const errMsg = lastError?.message || lastError?.description || 'auth-callback-failed'
       return NextResponse.redirect(`${origin}/login?error=auth-callback-failed&description=${encodeURIComponent(errMsg)}`)
     }

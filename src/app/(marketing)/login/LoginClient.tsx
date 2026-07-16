@@ -21,6 +21,8 @@ export default function LoginClient() {
   const [error, setError] = useState<string | null>(null)
   const [isSignUp, setIsSignUp] = useState(false)
   const [isEmailTaken, setIsEmailTaken] = useState(false)
+  const [isGoogleAccountExists, setIsGoogleAccountExists] = useState(false)
+  const [googleEmail, setGoogleEmail] = useState('')
 
   const supabase = createClient()
 
@@ -35,24 +37,30 @@ export default function LoginClient() {
     setError(null)
     setMessage(null)
     setIsEmailTaken(false)
+    setIsGoogleAccountExists(false)
   }, [mode])
 
   // Manejar errores devueltos por redirección de Google OAuth / Supabase
   useEffect(() => {
     if (errorParam) {
       setIsEmailTaken(false)
+      setIsGoogleAccountExists(false)
       const descText = descParam ? decodeURIComponent(descParam).toLowerCase() : ''
       const errText = errorParam.toLowerCase()
       
       if (errText.includes('identity_already_exists') || descText.includes('already exists') || descText.includes('email_taken')) {
         setError('Ya existe una cuenta con este correo electrónico (posiblemente creada con contraseña). Por favor, inicia sesión escribiendo tu correo y contraseña, o restablece tu clave si no la recuerdas.')
+      } else if (errText === 'account_exists_google') {
+        const emailVal = searchParams.get('email') ? decodeURIComponent(searchParams.get('email')!) : ''
+        setGoogleEmail(emailVal)
+        setIsGoogleAccountExists(true)
       } else if (errText === 'auth-callback-failed') {
         setError('Tuvimos un inconveniente al conectar con tu cuenta de Google por un problema temporal de red. Por favor, intenta de nuevo presionando "Acceder con Google".')
       } else {
         setError(descParam ? decodeURIComponent(descParam) : 'No pudimos autenticar tu cuenta. Inténtalo de nuevo.')
       }
     }
-  }, [errorParam, descParam])
+  }, [errorParam, descParam, searchParams])
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,6 +68,7 @@ export default function LoginClient() {
     setMessage(null)
     setError(null)
     setIsEmailTaken(false)
+    setIsGoogleAccountExists(false)
 
     try {
       if (isSignUp) {
@@ -73,15 +82,12 @@ export default function LoginClient() {
         
         if (signUpError) {
           const errMsg = signUpError.message.toLowerCase()
-          // Capturar si la cuenta ya existe
           if (errMsg.includes('already registered') || errMsg.includes('already exists') || errMsg.includes('email_taken')) {
             setIsEmailTaken(true)
           } else {
             setError(signUpError.message)
           }
         } else {
-          // Nota: Supabase a veces no devuelve error de seguridad por privacidad de enumeración,
-          // pero si data.user existe y data.user.identities es un array vacío, significa que el email ya está registrado
           const userIdentities = data?.user?.identities
           if (userIdentities && userIdentities.length === 0) {
             setIsEmailTaken(true)
@@ -111,11 +117,13 @@ export default function LoginClient() {
     setLoading(true)
     setError(null)
     setIsEmailTaken(false)
+    setIsGoogleAccountExists(false)
     try {
+      const flowParam = isSignUp ? 'signup' : 'signin'
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/api/auth/callback`,
+          redirectTo: `${window.location.origin}/api/auth/callback?flow=${flowParam}`,
         },
       })
       if (oauthError) {
@@ -227,8 +235,32 @@ export default function LoginClient() {
             </div>
           )}
 
+          {/* Alerta de Cuenta de Google Ya Existente durante Registro */}
+          {isGoogleAccountExists && (
+            <div className="p-4 bg-blue-50 border border-blue-200/60 rounded-2xl space-y-2.5 text-slate-700 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-2 text-blue-700 font-black">
+                <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span>Cuenta de Google ya registrada</span>
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                La cuenta de Google ({googleEmail}) ya tiene un registro previo en la plataforma. Por favor, ve a la sección de inicio de sesión para ingresar a tu tienda.
+              </p>
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(false)
+                  setIsGoogleAccountExists(false)
+                  setError(null)
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-[10px] h-9 transition-all active:scale-[0.98]"
+              >
+                Ir a Iniciar Sesión
+              </Button>
+            </div>
+          )}
+
           {/* Mensajes de Error con animación de escala */}
-          {error && (
+          {error && !isGoogleAccountExists && (
             <div className="p-3 bg-red-50 border border-red-200/60 rounded-xl text-red-600 flex items-start gap-2.5 font-medium animate-in zoom-in-95 duration-200 leading-normal">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
@@ -308,6 +340,7 @@ export default function LoginClient() {
               setError(null)
               setMessage(null)
               setIsEmailTaken(false)
+              setIsGoogleAccountExists(false)
             }}
             className="text-xs text-slate-500 hover:text-blue-600 transition-colors font-bold"
           >
