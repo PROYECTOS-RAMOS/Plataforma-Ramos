@@ -1,9 +1,15 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
+// Clean and correct any typos in the endpoint URI (e.g. 'ttps://')
+let r2Endpoint = process.env.CLOUDFLARE_R2_ENDPOINT || ''
+if (r2Endpoint.startsWith('ttps://')) {
+  r2Endpoint = 'https://' + r2Endpoint.slice(7)
+}
+
 // 1. Inicializar el cliente S3 para Cloudflare R2
 export const r2Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+  endpoint: r2Endpoint || undefined,
   credentials: {
     accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
