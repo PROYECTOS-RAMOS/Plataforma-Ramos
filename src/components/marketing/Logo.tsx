@@ -76,17 +76,16 @@ export default function Logo({ className = '', size = 40, mirror = false }: Logo
         <polygon
           points="28,50 35,62 28,74 21,62"
           fill="url(#gradient-blue)"
-          className="animate-left-diamond shadow-lg"
-          filter="url(#glow-blue)"
-        />
-        {/* Trazo del Rombo Izquierdo */}
-        <path
-          d="M 21 62 L 28 50 L 35 62"
-          stroke="#3B82F6"
-          strokeWidth="1"
-          strokeLinecap="round"
           className="animate-left-diamond"
-          opacity="0.5"
+        />
+        {/* Trazo del Rombo Izquierdo para darle relieve 3D */}
+        <path
+          d="M 21 62 L 28 50 L 35 62 L 28 74 Z"
+          stroke="#2563EB"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
+          className="animate-left-diamond"
+          opacity="0.8"
         />
 
         {/* Rombo Derecho Arriba (Azul) */}
@@ -94,16 +93,15 @@ export default function Logo({ className = '', size = 40, mirror = false }: Logo
           points="70,44 75,52 70,60 65,52"
           fill="url(#gradient-blue)"
           className="animate-right-diamond"
-          filter="url(#glow-blue)"
         />
-        {/* Trazo del Rombo Derecho */}
+        {/* Trazo del Rombo Derecho para darle relieve 3D */}
         <path
-          d="M 70 60 L 65 52 L 70 44"
-          stroke="#3B82F6"
-          strokeWidth="1"
-          strokeLinecap="round"
+          d="M 65 52 L 70 44 L 75 52 L 70 60 Z"
+          stroke="#2563EB"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
           className="animate-right-diamond"
-          opacity="0.5"
+          opacity="0.8"
         />
 
         {/* Rombo Central Grande (Rojo) */}
@@ -111,46 +109,37 @@ export default function Logo({ className = '', size = 40, mirror = false }: Logo
           points="50,22 61,45 50,68 39,45"
           fill="url(#gradient-red)"
           className="animate-main-diamond"
-          filter="url(#glow-red)"
         />
-        {/* Contorno sutil del Rombo Central */}
+        {/* Contorno del Rombo Central para darle relieve 3D */}
         <path
           d="M 39 45 L 50 22 L 61 45 L 50 68 Z"
-          stroke="#EF4444"
-          strokeWidth="1"
+          stroke="#DC2626"
+          strokeWidth="0.8"
           strokeLinejoin="round"
           className="animate-main-diamond"
-          opacity="0.3"
+          opacity="0.9"
         />
 
-        {/* GRADIENTES Y FILTROS */}
+        {/* GRADIENTES Y DEGRADADOS OPTIMIZADOS (Compatibilidad 100% en todos los navegadores) */}
         <defs>
-          {/* Degradado Rojo */}
-          <linearGradient id="gradient-red" x1="50" y1="22" x2="50" y2="68" gradientUnits="userSpaceOnUse">
+          {/* Degradado Rojo de arriba hacia abajo */}
+          <linearGradient id="gradient-red" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#EF4444" />
             <stop offset="100%" stopColor="#991B1B" />
           </linearGradient>
 
-          {/* Degradado Azul */}
-          <linearGradient id="gradient-blue" x1="28" y1="21" x2="72" y2="74" gradientUnits="userSpaceOnUse">
+          {/* Degradado Azul de arriba hacia abajo */}
+          <linearGradient id="gradient-blue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#3B82F6" />
             <stop offset="100%" stopColor="#1E3A8A" />
           </linearGradient>
 
           {/* Degradado para los trazos de fondo */}
-          <linearGradient id="gradient-trace" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <linearGradient id="gradient-trace" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#64748B" stopOpacity="0.8" />
             <stop offset="50%" stopColor="#F1F5F9" stopOpacity="0.4" />
             <stop offset="100%" stopColor="#64748B" stopOpacity="0" />
           </linearGradient>
-
-          {/* Filtros de brillo (Glow) */}
-          <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#EF4444" floodOpacity="0.3" />
-          </filter>
-          <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#3B82F6" floodOpacity="0.25" />
-          </filter>
         </defs>
       </svg>
     </div>
