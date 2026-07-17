@@ -47,6 +47,11 @@ export default async function AdminLayout({
     }
   }
 
+  // 4. Redirección centralizada al Onboarding si la tienda no está configurada
+  if (!store || !store.slug || !store.phone || !store.category) {
+    redirect('/onboarding')
+  }
+
   return (
     <AdminLayoutClient 
       profile={profile || { full_name: 'Vendedor', avatar_url: null, role: 'user' }} 
