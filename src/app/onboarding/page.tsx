@@ -137,7 +137,7 @@ export default function OnboardingPage() {
 
     try {
       const cleanPhone = whatsappPhone.replace(/\D/g, '')
-      const finalPhone = cleanPhone.startsWith('51') ? cleanPhone : `51${cleanPhone}`
+      const finalPhone = cleanPhone.startsWith('51') ? `+${cleanPhone}` : `+51${cleanPhone}`
 
       // 1. Crear tienda
       const { data: newStore, error: storeError } = await supabase
