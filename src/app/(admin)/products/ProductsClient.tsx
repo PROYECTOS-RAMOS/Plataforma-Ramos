@@ -647,10 +647,10 @@ export default function ProductsClient({ store, initialCategories, initialProduc
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="relative bg-white rounded-xl shadow-xl border border-border-subtle max-w-md w-full overflow-hidden z-10"
+              className="relative bg-white rounded-xl shadow-xl border border-border-subtle max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden z-10"
             >
             
-            <div className="flex justify-between items-center px-6 py-4 border-b border-border-subtle bg-slate-50">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-border-subtle bg-slate-50 flex-shrink-0">
               <h3 className="font-bold text-on-surface text-sm">
                 {selectedProduct ? 'Editar Producto' : 'Crear Producto'}
               </h3>
@@ -662,7 +662,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 text-xs font-semibold">
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 text-xs font-semibold overflow-y-auto flex-1">
               <div className="space-y-1">
                 <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                   Nombre del Producto
