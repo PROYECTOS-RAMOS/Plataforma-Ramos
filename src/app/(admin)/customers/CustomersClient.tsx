@@ -17,6 +17,7 @@ interface CustomersClientProps {
   store: {
     id: string
     name: string
+    currency_code?: string
   }
   initialCustomers: Customer[]
 }
@@ -27,9 +28,10 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
   const [filterSegment, setFilterSegment] = useState<'all' | 'frequent' | 'new' | 'inactive'>('all')
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-US', {
+    const currency = store.currency_code || 'PEN'
+    return new Intl.NumberFormat(currency === 'PEN' ? 'es-PE' : 'es-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
     }).format(amount)
   }
 
@@ -116,7 +118,7 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket Promedio</span>
           <div className="flex items-end gap-3">
             <span className="text-3xl font-bold text-primary">{formatCurrency(ticketAverage)}</span>
-            <span className="text-on-surface-variant text-xs mb-1 font-bold">USD</span>
+            <span className="text-on-surface-variant text-xs mb-1 font-bold">{store.currency_code || 'PEN'}</span>
           </div>
         </div>
       </div>

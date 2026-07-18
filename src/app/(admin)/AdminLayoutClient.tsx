@@ -68,7 +68,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
               href={publicStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary-container/10 hover:bg-secondary-container/20 text-secondary text-[10px] font-bold rounded transition-colors w-fit border border-secondary/15"
+              className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-55 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-lg transition-all w-fit border border-indigo-100 dark:border-indigo-900/50 shadow-sm"
             >
               <span className="material-symbols-outlined text-[13px]">open_in_new</span>
               <span>Visitar mi Tienda</span>

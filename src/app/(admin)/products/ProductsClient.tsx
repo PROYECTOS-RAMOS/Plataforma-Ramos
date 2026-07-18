@@ -39,6 +39,7 @@ interface ProductsClientProps {
   store: {
     id: string
     name: string
+    currency_code?: string
   }
   initialCategories: Category[]
   initialProducts: Product[]
@@ -366,9 +367,10 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-US', {
+    const currency = store.currency_code || 'PEN'
+    return new Intl.NumberFormat(currency === 'PEN' ? 'es-PE' : 'es-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
     }).format(amount)
   }
 

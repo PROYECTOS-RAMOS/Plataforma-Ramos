@@ -60,8 +60,8 @@ export default async function SettingsPage() {
         owner_id: user.id,
         name: 'Mi Nueva Tienda',
         slug: defaultSlug,
-        whatsapp_phone: '+15551234567', // Teléfono dummy inicial
-        currency_code: 'USD',
+        whatsapp_phone: '+51900000000', // Teléfono dummy inicial de Perú
+        currency_code: 'PEN',
         template_name: 'minimal',
         theme_settings: {
           primaryColor: '#0F172A',
@@ -79,6 +79,18 @@ export default async function SettingsPage() {
 
     if (!error && newStore) {
       store = newStore
+
+      // Crear un catálogo por defecto para que la sección de catálogos esté lista desde el inicio
+      await adminSupabase
+        .from('catalogs')
+        .insert({
+          store_id: newStore.id,
+          name: 'Catálogo Principal',
+          slug: 'catalogo-principal',
+          description: 'Nuestro catálogo con todos los productos destacados.',
+          is_active: true,
+          is_default: true
+        })
     }
   }
 

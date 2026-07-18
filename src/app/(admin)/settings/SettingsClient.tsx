@@ -49,6 +49,7 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
   const [showDecimals, setShowDecimals] = useState(store.show_decimals)
   const [showCanceledOrders, setShowCanceledOrders] = useState(store.show_canceled_orders)
   const [primaryColor, setPrimaryColor] = useState(store.theme_settings?.primaryColor || '#3B82F6')
+  const [currencyCode, setCurrencyCode] = useState(store.currency_code || 'PEN')
 
   // 2. Estados Pedidos y Ventas
   const [collectSalesTax, setCollectSalesTax] = useState(store.collect_sales_tax)
@@ -145,6 +146,7 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
         show_decimals: showDecimals,
         show_canceled_orders: showCanceledOrders,
         theme_settings: { primaryColor },
+        currency_code: currencyCode,
         collect_sales_tax: collectSalesTax,
         sales_tax_rate: parseFloat(salesTaxRate) || 0,
         custom_order_statuses: orderStatuses,
@@ -398,6 +400,19 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
                       disabled={!isUserAdmin}
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">Divisa de la Tienda (Moneda)</label>
+                  <select
+                    value={currencyCode}
+                    onChange={(e) => setCurrencyCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-xs font-medium bg-white"
+                    disabled={!isUserAdmin}
+                  >
+                    <option value="PEN">Soles Peruanos (S/.)</option>
+                    <option value="USD">Dólares Americanos ($)</option>
+                  </select>
                 </div>
               </div>
 

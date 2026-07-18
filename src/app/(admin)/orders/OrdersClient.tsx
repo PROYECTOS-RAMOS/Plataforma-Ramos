@@ -28,6 +28,7 @@ interface OrdersClientProps {
     id: string
     name: string
     slug: string
+    currency_code?: string
   }
   initialOrders: Order[]
 }
@@ -114,9 +115,10 @@ export default function OrdersClient({ store, initialOrders }: OrdersClientProps
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-US', {
+    const currency = store.currency_code || 'PEN'
+    return new Intl.NumberFormat(currency === 'PEN' ? 'es-PE' : 'es-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
     }).format(amount)
   }
 
