@@ -28,7 +28,8 @@ async function createAdminUser() {
         password: '123-123-123',
         email_confirm: true,
         user_metadata: {
-          full_name: 'Master Administrador'
+          full_name: 'Master Administrador',
+          role: 'super_admin'
         }
       })
     });
@@ -44,30 +45,8 @@ async function createAdminUser() {
     console.log('   ID:', data.id);
     console.log('   Email:', data.email);
     console.log('   Email confirmado:', data.email_confirmed_at);
-    console.log('\n📝 Ahora actualizando el perfil en public.profiles...\n');
-
-    // Actualizar perfil
-    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=ignore-duplicates'
-      },
-      body: JSON.stringify({
-        id: data.id,
-        full_name: 'Master Administrador',
-        role: 'super_admin'
-      })
-    });
-
-    if (!profileResponse.ok) {
-      console.error('❌ Error actualizando perfil:', await profileResponse.json());
-      process.exit(1);
-    }
-
-    console.log('✅ Perfil actualizado exitosamente\n');
+    console.log('\n📝 El trigger de base de datos creará automáticamente el perfil en public.master_admins...\n');
+    console.log('✅ Proceso de creación del Super Administrador completado\n');
     console.log('═══════════════════════════════════════════════════');
     console.log('CREDENCIALES DE DESARROLLO:');
     console.log('═══════════════════════════════════════════════════');

@@ -35,21 +35,12 @@ export default function MasterLoginPage() {
       }
       if (!authData.user) throw new Error('No se pudo autenticar el usuario.')
 
-      // 2. Verificar rol de Super Admin en el perfil
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', authData.user.id)
-        .single()
+      // 2. Verificar rol de Super Admin en los metadatos del usuario (token JWT)
+      const role = authData.user.user_metadata?.role
 
-      if (profileError || !profile) {
+      if (role !== 'super_admin') {
         await supabase.auth.signOut()
-        throw new Error('Perfil de usuario no encontrado. Contacta al administrador del sistema.')
-      }
-
-      if (profile.role !== 'super_admin') {
-        await supabase.auth.signOut()
-        throw new Error('Acceso denegado. Esta sección es exclusiva para Super Administradores. Tu rol actual: ' + profile.role)
+        throw new Error('Acceso denegado. Esta sección es exclusiva para Super Administradores.')
       }
 
       // Redirigir a Master Dashboard

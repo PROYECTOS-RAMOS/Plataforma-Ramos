@@ -16,19 +16,25 @@ export default async function MasterLayout({
     redirect('/master/login')
   }
 
-  // 2. Validar rol de Super Admin
-  const { data: profile } = await supabase
-    .from('profiles')
+  // 2. Validar rol de Super Admin desde la nueva tabla master_admins
+  const { data: adminProfile } = await supabase
+    .from('master_admins')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'super_admin') {
+  if (!adminProfile) {
     redirect('/master/login')
   }
 
+  // Mapeamos para mantener la compatibilidad con el componente cliente
+  const compatibleProfile = {
+    ...adminProfile,
+    role: 'super_admin'
+  }
+
   return (
-    <MasterLayoutClient profile={profile}>
+    <MasterLayoutClient profile={compatibleProfile}>
       {children}
     </MasterLayoutClient>
   )
