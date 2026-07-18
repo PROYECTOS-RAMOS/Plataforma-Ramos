@@ -71,7 +71,8 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   const [prodDesc, setProdDesc] = useState('')
   const [prodPrice, setProdPrice] = useState('')
   const [prodCatId, setProdCatId] = useState('')
-  const [prodImageUrl, setProdImageUrl] = useState('')
+  const [prodImageUrls, setProdImageUrls] = useState<string[]>([])
+  const [inputImageUrl, setInputImageUrl] = useState('')
   const [prodAvailable, setProdAvailable] = useState(true)
   const [prodCatalogIds, setProdCatalogIds] = useState<string[]>([])
   const [loadingProd, setLoadingProd] = useState(false)
@@ -101,12 +102,26 @@ export default function ProductsClient({ store, initialCategories, initialProduc
         throw new Error(data.error || 'Error al subir la imagen')
       }
 
-      setProdImageUrl(data.url)
+      setProdImageUrls((prev) => [...prev, data.url])
     } catch (err: any) {
       alert(err.message || 'Error al subir la imagen del producto.')
     } finally {
       setUploadingProdImg(false)
     }
+  }
+
+  // Añadir URL de imagen de manera manual al array
+  const handleAddManualImageUrl = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    if (inputImageUrl.trim()) {
+      setProdImageUrls((prev) => [...prev, inputImageUrl.trim()])
+      setInputImageUrl('')
+    }
+  }
+
+  // Eliminar imagen del array de imágenes
+  const handleRemoveProductImage = (indexToRemove: number) => {
+    setProdImageUrls((prev) => prev.filter((_, idx) => idx !== indexToRemove))
   }
 
   // ----------------------------------------------------
@@ -205,7 +220,8 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       setProdDesc(product.description || '')
       setProdPrice(product.price.toString())
       setProdCatId(product.category_id || '')
-      setProdImageUrl(product.images[0] || '')
+      setProdImageUrls(product.images || [])
+      setInputImageUrl('')
       setProdAvailable(product.is_available)
       
       // Obtener relaciones de catálogos del producto
@@ -218,7 +234,8 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       setProdDesc('')
       setProdPrice('')
       setProdCatId(categories[0]?.id || '')
-      setProdImageUrl('')
+      setProdImageUrls([])
+      setInputImageUrl('')
       setProdAvailable(true)
       setProdCatalogIds([])
     }
@@ -230,7 +247,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
     if (!prodTitle.trim() || !prodPrice) return
 
     setLoadingProd(true)
-    const imagesArray = prodImageUrl.trim() ? [prodImageUrl.trim()] : []
+    const imagesArray = prodImageUrls.filter(url => url.trim() !== '')
 
     // Generar un slug limpio
     const generatedSlug = prodTitle.trim().toLowerCase()
@@ -723,45 +740,57 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
-                  Foto del Producto
+                  Fotos del Producto
                 </label>
-                
-                {prodImageUrl ? (
-                  <div className="relative w-full aspect-video rounded-xl bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center group shadow-sm">
-                    <img 
-                      src={prodImageUrl} 
-                      alt="Vista previa del producto" 
-                      className="w-full h-full object-cover" 
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <label className="p-2 bg-white text-slate-800 rounded-full hover:bg-slate-100 transition-all cursor-pointer shadow">
-                        <span className="material-symbols-outlined text-[18px] block">upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleUploadProductImage}
-                          className="hidden"
-                          disabled={uploadingProdImg}
+
+                {prodImageUrls.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {prodImageUrls.map((url, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center group shadow-sm">
+                        <img 
+                          src={url} 
+                          alt={`Foto ${index + 1}`} 
+                          className="w-full h-full object-cover" 
                         />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setProdImageUrl('')}
-                        className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow"
-                      >
-                        <span className="material-symbols-outlined text-[18px] block">delete</span>
-                      </button>
-                    </div>
-                    {uploadingProdImg && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold gap-2">
-                        <span className="animate-spin material-symbols-outlined text-[18px]">progress_activity</span>
-                        <span>Subiendo...</span>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveProductImage(index)}
+                            className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow"
+                            title="Eliminar esta foto"
+                          >
+                            <span className="material-symbols-outlined text-[16px] block">delete</span>
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    ))}
+                    
+                    {/* Botón de añadir más fotos (en la grilla) */}
+                    <label className={`relative aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-admin-deep-blue bg-slate-50/50 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${uploadingProdImg ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {uploadingProdImg ? (
+                        <>
+                          <span className="animate-spin material-symbols-outlined text-slate-400 text-[18px]">progress_activity</span>
+                          <span className="text-slate-400 text-[9px] font-bold text-center">Subiendo...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-slate-400 text-[20px]">add</span>
+                          <span className="text-slate-500 font-bold text-[9px] text-center">Subir más</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadProductImage}
+                        className="hidden"
+                        disabled={uploadingProdImg}
+                      />
+                    </label>
                   </div>
                 ) : (
+                  /* Tarjeta grande si está vacío */
                   <label className={`w-full aspect-video rounded-xl border-2 border-dashed border-slate-300 hover:border-admin-deep-blue bg-slate-50/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${uploadingProdImg ? 'opacity-50 pointer-events-none' : ''}`}>
                     {uploadingProdImg ? (
                       <>
@@ -771,8 +800,8 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-slate-400 text-[26px]">image</span>
-                        <span className="text-slate-600 font-bold text-[11px]">Subir foto de producto</span>
-                        <span className="text-[10px] text-slate-400 font-medium">Formatos soportados: PNG, JPG, WEBP</span>
+                        <span className="text-slate-600 font-bold text-[11px]">Subir fotos del producto</span>
+                        <span className="text-[10px] text-slate-400 font-medium">Formatos soportados: PNG, JPG, WEBP (Soporta múltiples)</span>
                       </>
                     )}
                     <input
@@ -785,15 +814,31 @@ export default function ProductsClient({ store, initialCategories, initialProduc
                   </label>
                 )}
 
-                {/* Input de respaldo */}
-                <div className="pt-2">
+                {/* Input de respaldo para agregar URL manual */}
+                <div className="pt-1 flex gap-2">
                   <input
                     type="text"
-                    value={prodImageUrl}
-                    onChange={(e) => setProdImageUrl(e.target.value)}
-                    placeholder="O pega una URL de imagen directamente aquí..."
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-[10px] bg-slate-50 font-mono font-medium text-slate-500"
+                    value={inputImageUrl}
+                    onChange={(e) => setInputImageUrl(e.target.value)}
+                    placeholder="O pega una URL de imagen..."
+                    className="flex-1 px-3 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-admin-deep-blue text-[10px] bg-slate-50 font-mono font-medium text-slate-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (inputImageUrl.trim()) {
+                          setProdImageUrls((prev) => [...prev, inputImageUrl.trim()]);
+                          setInputImageUrl('');
+                        }
+                      }
+                    }}
                   />
+                  <button
+                    type="button"
+                    onClick={handleAddManualImageUrl}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md text-[10px] font-bold text-slate-700 transition-colors"
+                  >
+                    Agregar URL
+                  </button>
                 </div>
               </div>
 

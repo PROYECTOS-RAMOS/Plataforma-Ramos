@@ -21,7 +21,7 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = 'Plataforma Ramos <onboarding@resend.dev>'
+  from = process.env.RESEND_FROM_EMAIL || 'Plataforma Ramos <onboarding@resend.dev>'
 }: SendEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
