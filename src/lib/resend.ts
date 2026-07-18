@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-// Inicializar el cliente oficial de Resend
+// Inicializar el cliente oficial de Resend con las claves del entorno actualizadas
 export const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key')
 
 interface SendEmailParams {
