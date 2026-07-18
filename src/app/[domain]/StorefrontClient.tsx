@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Link } from 'next-view-transitions'
-import { useCart, CartItem } from '@/lib/store/useCart'
+import { useCart } from '@/hooks/useCart'
+import { CartItem } from '@/contexts/CartContext'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
@@ -112,8 +113,6 @@ export default function StorefrontClient({ store, categories, products, shipping
   const [custName, setCustName] = useState('')
   const [custPhone, setCustPhone] = useState('')
   const [custAddress, setCustAddress] = useState('')
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('pickup')
-  const [selectedShippingRuleId, setSelectedShippingRuleId] = useState<string>('')
   
   // Carga de procesamiento
   const [processing, setProcessing] = useState(false)
@@ -134,6 +133,7 @@ export default function StorefrontClient({ store, categories, products, shipping
   }
 
   const cart = useCart()
+  const { deliveryType, setDeliveryType, selectedShippingRuleId, setSelectedShippingRuleId } = cart
   const supabase = createClient()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -362,32 +362,15 @@ export default function StorefrontClient({ store, categories, products, shipping
 
       if (itemsErr) throw new Error(itemsErr.message)
 
-      // 4. Limpiar carro en Zustand y cookies
-      cart.clearCart()
-
-      // 5. Redireccionar al WhatsApp del vendedor con el ticket formateado
-      let itemsText = ''
-      orderItemsInsert.forEach((item) => {
-        const optionsLabel = item.selected_options.length > 0 
-          ? ` (${item.selected_options.map(o => o.valueName).join(', ')})`
-          : ''
-        itemsText += `• ${item.quantity}x ${item.product_title}${optionsLabel} - ${formatPrice(item.price * item.quantity)}\n`
+      // 4. Invocar el formateador dinámico del contexto con la validación anti-tampering integrada
+      const { url } = await cart.generateWhatsAppMessage(store, shippingRules, {
+        name: custName.trim(),
+        phone: formattedPhone,
+        address: deliveryType === 'delivery' ? custAddress.trim() : undefined
       })
 
-      const checkoutText = `*NUEVO PEDIDO #${order.id.slice(0, 8)}*\n\n` +
-        `👤 *Cliente:* ${custName.trim()}\n` +
-        `📞 *Teléfono:* ${formattedPhone}\n` +
-        `🛵 *Entrega:* ${deliveryType === 'delivery' ? 'Domicilio' : 'Retiro local'}\n` +
-        (deliveryType === 'delivery' ? `📍 *Dirección:* ${custAddress.trim()}\n\n` : '\n') +
-        `📦 *Detalle:*\n${itemsText}\n` +
-        `💵 *Subtotal:* ${formatPrice(cartSubtotal)}\n` +
-        (deliveryType === 'delivery' ? `🚚 *Envío:* ${formatPrice(shippingCost)}\n` : '') +
-        (store.collect_sales_tax ? `🏛️ *Impuesto:* ${formatPrice(taxCost)}\n` : '') +
-        `💰 *Total:* ${formatPrice(cartTotal)}\n\n` +
-        `Por favor, confirma recepción para finalizar. ¡Gracias!`
-
-      const whatsappTarget = store.whatsapp_phone.replace('+', '')
-      window.location.href = `https://api.whatsapp.com/send?phone=${whatsappTarget}&text=${encodeURIComponent(checkoutText)}`
+      // 5. Redireccionar al WhatsApp del vendedor con el ticket formateado
+      window.location.href = url
       
     } catch (err: any) {
       setCheckoutError(err.message || 'Error al procesar el pedido. Intente nuevamente.')
@@ -1229,7 +1212,7 @@ export default function StorefrontClient({ store, categories, products, shipping
                             <select
                               id="select-shipping-rule"
                               data-testid="shipping-rule"
-                              value={selectedShippingRuleId}
+                              value={selectedShippingRuleId || ''}
                               onChange={(e) => setSelectedShippingRuleId(e.target.value)}
                               className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--tenant-primary)] text-sm bg-white"
                             >

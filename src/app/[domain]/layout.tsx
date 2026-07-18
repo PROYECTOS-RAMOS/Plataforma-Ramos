@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import React from 'react'
 
+import { CartProvider } from '@/contexts/CartContext'
+
 interface TenantLayoutProps {
   children: React.ReactNode
   params: Promise<{ domain: string }>
@@ -34,11 +36,13 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   } as React.CSSProperties
 
   return (
-    <div 
-      style={themeStyles} 
-      className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[var(--tenant-primary)] selection:text-white"
-    >
-      {children}
-    </div>
+    <CartProvider storeId={store.id}>
+      <div 
+        style={themeStyles} 
+        className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[var(--tenant-primary)] selection:text-white"
+      >
+        {children}
+      </div>
+    </CartProvider>
   )
 }

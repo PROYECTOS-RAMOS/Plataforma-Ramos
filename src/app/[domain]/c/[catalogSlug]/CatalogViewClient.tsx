@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Link } from 'next-view-transitions'
-import { useCart, CartItem } from '@/lib/store/useCart'
+import { useCart } from '@/hooks/useCart'
+import { CartItem } from '@/contexts/CartContext'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
@@ -121,8 +122,6 @@ export default function CatalogViewClient({ store, catalog, categories, products
   const [custName, setCustName] = useState('')
   const [custPhone, setCustPhone] = useState('')
   const [custAddress, setCustAddress] = useState('')
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('pickup')
-  const [selectedShippingRuleId, setSelectedShippingRuleId] = useState<string>('')
   
   // Carga de procesamiento
   const [processing, setProcessing] = useState(false)
@@ -143,6 +142,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
   }
 
   const cart = useCart()
+  const { deliveryType, setDeliveryType, selectedShippingRuleId, setSelectedShippingRuleId } = cart
   const supabase = createClient()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -289,9 +289,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
   const currentShippingRule = shippingRules.find((r) => r.id === selectedShippingRuleId)
   const shippingCost = deliveryType === 'delivery' && currentShippingRule ? Number(currentShippingRule.price) : 0
   const taxCost = store.collect_sales_tax ? (cartSubtotal * Number(store.sales_tax_rate) / 100) : 0
-  const cartTotal = cartSubtotal + shippingCost + taxCost
-
-  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+  const cartTotal = cartSubtotal + shippingCost + taxCost  const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!custName.trim() || !custPhone.trim()) return
     if (deliveryType === 'delivery' && !custAddress.trim()) {
@@ -301,18 +299,41 @@ export default function CatalogViewClient({ store, catalog, categories, products
 
     setProcessing(true)
 
+    // Formatear teléfono para WhatsApp E.164 (asegurar prefijo +)
+    let formattedPhone = custPhone.trim()
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = '+' + formattedPhone.replace(/\D/g, '')
+    }
+
     try {
+      // 1. Insertar/Actualizar Cliente en Supabase CRM
+      const { data: customer, error: customerErr } = await supabase
+        .from('customers')
+        .upsert(
+          {
+            store_id: store.id,
+            name: custName.trim(),
+            phone: formattedPhone,
+            address: deliveryType === 'delivery' ? custAddress.trim() : null
+          },
+          { onConflict: 'store_id,phone' }
+        )
+        .select()
+        .single()
+
+      if (customerErr) throw new Error(customerErr.message)
+
+      // 2. Insertar Orden en Supabase con los campos reales
       const { data: order, error: orderErr } = await supabase
         .from('orders')
         .insert({
           store_id: store.id,
+          customer_id: customer.id,
           customer_name: custName.trim(),
-          customer_phone: custPhone.trim(),
-          customer_address: deliveryType === 'delivery' ? custAddress.trim() : 'Retiro en Tienda',
-          delivery_type: deliveryType,
+          customer_phone: formattedPhone,
+          shipping_rule_id: deliveryType === 'delivery' ? selectedShippingRuleId : null,
+          shipping_price: shippingCost,
           subtotal: cartSubtotal,
-          shipping_cost: shippingCost,
-          tax: taxCost,
           total: cartTotal,
           status: 'pending'
         })
@@ -321,52 +342,31 @@ export default function CatalogViewClient({ store, catalog, categories, products
 
       if (orderErr) throw new Error(orderErr.message)
 
-      const orderItemsData = cart.items.map((item) => ({
+      // 3. Insertar Artículos del pedido en order_items
+      const orderItemsInsert = cart.items.map((item) => ({
         order_id: order.id,
         product_id: item.productId,
-        quantity: item.quantity,
+        product_title: item.title,
         price: item.price,
-        options: item.selectedOptions
+        quantity: item.quantity,
+        selected_options: item.selectedOptions
       }))
 
       const { error: itemsErr } = await supabase
         .from('order_items')
-        .insert(orderItemsData)
+        .insert(orderItemsInsert)
 
       if (itemsErr) throw new Error(itemsErr.message)
 
-      // Mensaje de WhatsApp estructurado
-      let message = `*NUEVO PEDIDO - ${store.name}*\n`
-      message += `--------------------------------\n`
-      message += `*Cliente:* ${custName.trim()}\n`
-      message += `*Teléfono:* ${custPhone.trim()}\n`
-      message += `*Tipo:* ${deliveryType === 'delivery' ? '🚚 Envío a Domicilio' : '🏪 Retiro en Tienda'}\n`
-      if (deliveryType === 'delivery') {
-        message += `*Dirección:* ${custAddress.trim()}\n`
-      }
-      message += `--------------------------------\n`
-      message += `*Productos:*\n`
-      cart.items.forEach((item) => {
-        message += `- ${item.quantity}x ${item.title}`
-        if (item.selectedOptions.length > 0) {
-          message += ` (${item.selectedOptions.map((o) => o.valueName).join(', ')})`
-        }
-        message += ` [${formatPrice(item.price * item.quantity)}]\n`
+      // 4. Invocar el formateador dinámico del contexto con la validación anti-tampering integrada
+      const { url } = await cart.generateWhatsAppMessage(store, shippingRules, {
+        name: custName.trim(),
+        phone: formattedPhone,
+        address: deliveryType === 'delivery' ? custAddress.trim() : undefined
       })
-      message += `--------------------------------\n`
-      if (shippingCost > 0) message += `*Envío:* ${formatPrice(shippingCost)}\n`
-      if (taxCost > 0) message += `*Impuestos:* ${formatPrice(taxCost)}\n`
-      message += `*Total del Pedido: ${formatPrice(cartTotal)}*\n\n`
-      message += `¡Hola! Acabo de realizar este pedido desde el catálogo digital de tu tienda. Quedo atento a la confirmación del pago.`
 
-      const encodedMsg = encodeURIComponent(message)
-      const cleanPhone = store.whatsapp_phone.replace('+', '')
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`
-
-      cart.clearCart()
       closeCart()
-
-      window.open(waUrl, '_blank')
+      window.open(url, '_blank')
     } catch (err: any) {
       alert(err.message || 'Ocurrió un error al procesar tu pedido.')
     } finally {
@@ -1111,7 +1111,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
                           <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-slate-700">Zona de Envío</label>
                             <select
-                              value={selectedShippingRuleId}
+                              value={selectedShippingRuleId || ''}
                               onChange={(e) => setSelectedShippingRuleId(e.target.value)}
                               className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 text-sm bg-white font-medium"
                             >

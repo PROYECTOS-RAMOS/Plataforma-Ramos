@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Link } from 'next-view-transitions'
-import { useCart } from '@/lib/store/useCart'
+import { useCart } from '@/hooks/useCart'
 import { Button } from '@/components/ui/button'
 import { getOptimizedImageUrl } from '@/lib/cloudinary'
 import { motion, AnimatePresence } from 'framer-motion'
