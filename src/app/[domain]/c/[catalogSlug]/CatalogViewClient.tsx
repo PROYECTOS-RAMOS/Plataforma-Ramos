@@ -391,14 +391,23 @@ export default function CatalogViewClient({ store, catalog, categories, products
             <Link href="/" className="p-1 rounded-full text-slate-400 hover:bg-slate-100">
               <ArrowLeft className="w-5 h-5 text-slate-700" />
             </Link>
-            <div>
-              <h1 className="font-extrabold text-slate-900 text-xs leading-none uppercase tracking-tight truncate max-w-[150px]">
-                {store.name}
-              </h1>
-              <span className="text-[9px] font-bold text-indigo-600 block mt-0.5 truncate max-w-[150px]">
-                📁 {catalog.name}
-              </span>
-            </div>
+            <Link href="/" className="flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[var(--tenant-primary)] overflow-hidden shadow-sm border border-white flex items-center justify-center flex-shrink-0">
+                {store.logo_url ? (
+                  <img src={getOptimizedImageUrl(store.logo_url, { width: 60, height: 60 })} alt={store.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-black text-xs">{store.name.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h1 className="font-extrabold text-slate-900 text-xs leading-none uppercase tracking-tight truncate max-w-[120px]">
+                  {store.name}
+                </h1>
+                <span className="text-[8px] font-bold text-indigo-600 block mt-0.5 truncate max-w-[120px]">
+                  📁 {catalog.name}
+                </span>
+              </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -536,15 +545,19 @@ export default function CatalogViewClient({ store, catalog, categories, products
               <span>Volver a la Tienda</span>
             </Link>
             
-            <div className="flex items-center gap-3">
-              {store.logo_url && (
+            <Link href="/" className="flex items-center gap-3 hover:opacity-90 active:scale-95 transition-all">
+              {store.logo_url ? (
                 <img
                   src={getOptimizedImageUrl(store.logo_url, { width: 100, height: 100 })}
                   alt={store.name}
                   className="w-9 h-9 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0"
                 />
+              ) : (
+                <div className="w-9 h-9 rounded-xl bg-[var(--tenant-primary)] flex items-center justify-center text-white font-black text-xs shadow-sm flex-shrink-0">
+                  {store.name.charAt(0).toUpperCase()}
+                </div>
               )}
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <h1 className="text-xs font-black tracking-tight text-slate-800 uppercase">
                   {store.name}
                 </h1>
@@ -552,7 +565,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
                   📁 {catalog.name}
                 </span>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Caja de Búsqueda Centrada */}

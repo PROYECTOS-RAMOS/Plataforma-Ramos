@@ -394,8 +394,8 @@ export default function StorefrontClient({ store, categories, products, shipping
         {/* HEADER COMPACTO MÓVIL — Glassmorphism sticky */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-100/80 shadow-sm">
           <div className="flex items-center justify-between px-4 h-14">
-            {/* Logo + Nombre */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            {/* Logo + Nombre (Cliqueable) */}
+            <Link href="/" className="flex items-center gap-2.5 min-w-0 hover:opacity-90 active:scale-95 transition-all">
               <div className="w-9 h-9 rounded-full bg-[var(--tenant-primary)] overflow-hidden shadow-sm border-2 border-white flex items-center justify-center flex-shrink-0">
                 {store.logo_url ? (
                   <img src={getOptimizedImageUrl(store.logo_url, { width: 80, height: 80 })} alt={store.name} className="w-full h-full object-cover" />
@@ -404,7 +404,7 @@ export default function StorefrontClient({ store, categories, products, shipping
                 )}
               </div>
               <h1 className="text-sm font-black text-slate-900 tracking-tight truncate">{store.name}</h1>
-            </div>
+            </Link>
 
             {/* Acciones: Búsqueda + Carrito */}
             <div className="flex items-center gap-1">
@@ -561,19 +561,23 @@ export default function StorefrontClient({ store, categories, products, shipping
       <div className="hidden md:flex flex-col flex-1 min-h-screen bg-slate-50/50">
         {/* Cabecera Superior con Backdrop Blur */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 h-16 flex items-center px-12 justify-between z-30 shadow-sm">
-          {/* Logo + Nombre */}
-          <div className="flex items-center gap-3">
-            {store.logo_url && (
+          {/* Logo + Nombre (Cliqueable) */}
+          <Link href="/" className="flex items-center gap-3 hover:opacity-90 active:scale-95 transition-all">
+            {store.logo_url ? (
               <img
                 src={getOptimizedImageUrl(store.logo_url, { width: 100, height: 100 })}
                 alt={store.name}
                 className="w-9 h-9 rounded-xl object-cover border border-slate-100 shadow-sm flex-shrink-0"
               />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-[var(--tenant-primary)] flex items-center justify-center text-white font-black text-sm shadow-sm flex-shrink-0">
+                {store.name.charAt(0).toUpperCase()}
+              </div>
             )}
             <h1 className="text-lg font-black tracking-tight text-slate-800 uppercase">
               {store.name}
             </h1>
-          </div>
+          </Link>
 
           {/* Caja de Búsqueda Centrada */}
           <div className="relative w-96">

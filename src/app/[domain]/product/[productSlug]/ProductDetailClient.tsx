@@ -58,6 +58,7 @@ interface ProductDetailClientProps {
     currency_code: string
     theme_settings: any
     show_decimals: boolean
+    logo_url: string | null
   }
   product: Product
   categories: Category[]
@@ -172,7 +173,17 @@ export default function ProductDetailClient({ store, product, categories }: Prod
           <ArrowLeft className="w-4 h-4" />
           <span>Volver al Catálogo</span>
         </Link>
-        <h1 className="font-black text-sm text-slate-800 tracking-tight uppercase">{store.name}</h1>
+        {/* Logo + Nombre (Cliqueable) */}
+        <Link href={getCatalogLink()} className="flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+          <div className="w-8 h-8 rounded-full bg-[var(--tenant-primary)] overflow-hidden shadow-sm border border-white flex items-center justify-center flex-shrink-0">
+            {store.logo_url ? (
+              <img src={getOptimizedImageUrl(store.logo_url, { width: 60, height: 60 })} alt={store.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-black text-xs">{store.name.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+          <h1 className="font-black text-sm text-slate-800 tracking-tight uppercase">{store.name}</h1>
+        </Link>
         <Link
           href={`${getCatalogLink()}?cart=open`}
           className="relative p-2.5 text-slate-600 hover:bg-slate-100 rounded-full transition-all"
