@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'next-view-transitions'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -25,8 +25,24 @@ interface AdminLayoutClientProps {
 
 export default function AdminLayoutClient({ profile, store, children }: AdminLayoutClientProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const supabase = createClient()
+
+  // Escuchar cambios en la sesión de Supabase Auth para autorrefrescar de forma transparente los Server Components
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'TOKEN_REFRESHED') {
+        router.refresh()
+      } else if (event === 'SIGNED_OUT') {
+        window.location.href = '/login?reason=session_expired'
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase, router])
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },

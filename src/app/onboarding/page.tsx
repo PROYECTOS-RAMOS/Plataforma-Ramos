@@ -39,6 +39,7 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [isCheckingStore, setIsCheckingStore] = useState(true)
   const [globalError, setGlobalError] = useState<string | null>(null)
 
   // Paso 1: Nombre y Slug
@@ -56,23 +57,31 @@ export default function OnboardingPage() {
   // 1. Obtener usuario al cargar la página
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-      } else {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.replace('/login')
+          return
+        }
+        
         setUserId(user.id)
         setUserEmail(user.email || null)
         
-        // Verificar si ya tiene una tienda configurada de forma segura
+        // Verificar si ya tiene una tienda configurada de forma segura (usando maybeSingle)
         const { data: existingStore } = await supabase
           .from('stores')
           .select('id, slug, whatsapp_phone, category')
           .eq('owner_id', user.id)
-          .single()
+          .maybeSingle()
 
         if (existingStore && existingStore.slug && existingStore.whatsapp_phone && existingStore.category) {
-          router.push('/dashboard')
+          router.replace('/dashboard')
+          return
         }
+      } catch (err) {
+        console.error('Error al verificar sesión de tienda en onboarding:', err)
+      } finally {
+        setIsCheckingStore(false)
       }
     }
     checkUser()
@@ -188,6 +197,17 @@ export default function OnboardingPage() {
       setGlobalError(err.message || 'Ocurrió un error inesperado al configurar tu cuenta.')
       setLoading(false)
     }
+  }
+
+  if (isCheckingStore) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+        <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-xs font-bold text-slate-700">Verificando tu cuenta y panel...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

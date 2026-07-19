@@ -13,6 +13,7 @@ export default function LoginClient() {
   const mode = searchParams.get('mode')
   const errorParam = searchParams.get('error')
   const descParam = searchParams.get('description')
+  const reasonParam = searchParams.get('reason')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,7 +39,11 @@ export default function LoginClient() {
     setMessage(null)
     setIsEmailTaken(false)
     setIsGoogleAccountExists(false)
-  }, [mode])
+
+    if (reasonParam === 'session_expired') {
+      setMessage('Tu sesión ha finalizado por inactividad. Por favor, ingresa tus credenciales para continuar.')
+    }
+  }, [mode, reasonParam])
 
   // Manejar errores devueltos por redirección de Google OAuth / Supabase
   useEffect(() => {
