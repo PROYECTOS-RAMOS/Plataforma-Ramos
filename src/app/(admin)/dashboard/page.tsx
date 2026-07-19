@@ -1,63 +1,12 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminStoreOrRedirect } from '@/lib/supabase/storeHelper'
 import DashboardClient from './DashboardClient'
-import Link from 'next/link'
-import { Store } from 'lucide-react'
 
 export default async function DashboardPage() {
+  const { store } = await getAdminStoreOrRedirect()
   const supabase = await createClient()
 
-  // 1. Obtener sesión
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
-
-  // 2. Obtener tienda (dueño o colaborador)
-  let { data: store } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('owner_id', user.id)
-    .single()
-
-  if (!store) {
-    const { data: member } = await supabase
-      .from('store_members')
-      .select('store_id')
-      .eq('email', user.email)
-      .eq('status', 'active')
-      .single()
-
-    if (member) {
-      const { data: colabStore } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('id', member.store_id)
-        .single()
-      store = colabStore
-    }
-  }
-
-  // Si no hay tienda activa, mostrar Onboarding
-  if (!store) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Store className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-black text-slate-900">¡Bienvenido a Plataforma Ramos!</h2>
-        <p className="text-slate-500 max-w-md mt-2">
-          Antes de acceder al panel, necesitas registrar y configurar la información básica de tu tienda.
-        </p>
-        <Link 
-          href="/settings" 
-          className="mt-6 inline-flex items-center justify-center px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg transition-colors shadow-md"
-        >
-          Crear mi Tienda ahora
-        </Link>
-      </div>
-    )
-  }
-
-  // 3. Consultar métricas iniciales
+  // 1. Consultar métricas iniciales
   // Pedidos totales
   const { count: totalOrders } = await supabase
     .from('orders')
@@ -82,7 +31,7 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  // 4. Consultar contadores del plan actual
+  // 2. Consultar contadores del plan actual
   const { count: currentProductsCount } = await supabase
     .from('products')
     .select('*', { count: 'exact', head: true })
@@ -92,7 +41,7 @@ export default async function DashboardPage() {
     .from('plans')
     .select('*')
     .eq('id', store.plan_id)
-    .single()
+    .maybeSingle()
 
   return (
     <DashboardClient 
