@@ -6,7 +6,9 @@ export const metadata = {
   description: 'Encuentra respuestas rápidas sobre cómo crear tu catálogo, comisiones, dominios propios y el funcionamiento del sistema.',
 }
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <main className="flex-1 bg-white py-24 relative overflow-hidden">
       {/* Glows de fondo */}
@@ -15,9 +17,9 @@ export default function FAQPage() {
 
       <div className="w-full max-w-3xl mx-auto px-6 relative z-10">
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block font-bold">Resuelve tus dudas</span>
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block">Resuelve tus dudas</span>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Preguntas frecuentes</h1>
-          <p className="text-sm text-slate-505 max-w-xs mx-auto">¿Tienes dudas? Aquí te las respondemos al instante.</p>
+          <p className="text-sm text-slate-500 max-w-xs mx-auto">¿Tienes dudas? Aquí te las respondemos al instante.</p>
         </div>
 
         <div className="space-y-4 text-xs font-semibold">
@@ -48,7 +50,7 @@ export default function FAQPage() {
                 <span>{item.q}</span>
                 <ChevronDown className="w-4 h-4 text-slate-400" />
               </h3>
-              <p className="text-slate-650 font-medium leading-relaxed mt-2">{item.a}</p>
+              <p className="text-slate-600 font-medium leading-relaxed mt-2">{item.a}</p>
             </div>
           ))}
         </div>

@@ -5,7 +5,9 @@ export const metadata = {
   description: 'Aprende cómo configurar tu tienda en 3 sencillos pasos y comenzar a recibir pedidos hoy mismo.',
 }
 
-export default function ComoFuncionaPage() {
+export default async function ComoFuncionaPage() {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <main className="flex-1 bg-white py-24 relative overflow-hidden">
       {/* Glows de fondo */}
@@ -14,7 +16,7 @@ export default function ComoFuncionaPage() {
 
       <div className="w-full max-w-5xl mx-auto px-6 relative z-10">
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-20">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block font-bold">Flujo simple</span>
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block">Flujo simple</span>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Vende en 3 sencillos pasos</h1>
           <p className="text-sm text-slate-500 max-w-md mx-auto">Diseñamos el camino más corto entre tu inventario y el dinero del cliente.</p>
         </div>

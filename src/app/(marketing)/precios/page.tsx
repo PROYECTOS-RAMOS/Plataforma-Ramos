@@ -8,7 +8,9 @@ export const metadata = {
   description: 'Conoce nuestros planes transparentes y económicos para digitalizar tu catálogo hoy mismo.',
 }
 
-export default function PreciosPage() {
+export default async function PreciosPage() {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <main className="flex-1 bg-white py-24 relative overflow-hidden">
       {/* Glows de fondo */}

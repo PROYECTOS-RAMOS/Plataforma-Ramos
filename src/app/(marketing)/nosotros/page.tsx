@@ -6,7 +6,9 @@ export const metadata = {
   description: 'Conoce nuestra historia, misión y el equipo detrás de la plataforma que digitaliza a los pequeños y medianos comercios.',
 }
 
-export default function NosotrosPage() {
+export default async function NosotrosPage() {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <main className="flex-1 bg-white py-24 relative overflow-hidden">
       {/* Glows de fondo */}
@@ -17,7 +19,7 @@ export default function NosotrosPage() {
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block font-bold">Nuestra Historia</span>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Sobre Plataforma Ramos</h1>
-          <p className="text-sm text-slate-550 max-w-xs mx-auto">Digitalizando e-commerce locales sin barreras técnicas ni comisiones abusivas.</p>
+          <p className="text-sm text-slate-500 max-w-xs mx-auto">Digitalizando e-commerce locales sin barreras técnicas ni comisiones abusivas.</p>
         </div>
 
         <div className="space-y-12 text-sm text-slate-600 leading-relaxed font-medium">
@@ -51,8 +53,8 @@ export default function NosotrosPage() {
                 <div key={idx} className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" />
                   <div>
-                    <h3 className="text-white font-bold">{val.title}</h3>
-                    <p className="text-slate-400 font-medium mt-1">{val.desc}</p>
+                    <h3 className="text-slate-900 font-bold">{val.title}</h3>
+                    <p className="text-slate-500 font-medium mt-1">{val.desc}</p>
                   </div>
                 </div>
               ))}

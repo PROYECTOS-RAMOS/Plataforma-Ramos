@@ -6,7 +6,10 @@ export const metadata = {
   description: 'Descubre todas las potentes herramientas de nuestra plataforma para vender por WhatsApp.',
 }
 
-export default function CaracteristicasPage() {
+export default async function CaracteristicasPage() {
+  // Simular delay de 500ms para asegurar el renderizado visible del Skeleton (loading.tsx)
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
   return (
     <main className="flex-1 bg-white py-24 relative overflow-hidden">
       {/* Glows de fondo */}
@@ -15,7 +18,7 @@ export default function CaracteristicasPage() {
 
       <div className="w-full max-w-5xl mx-auto px-6 relative z-10">
         <div className="text-center max-w-2xl mx-auto space-y-4">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block font-bold">Potencia tu negocio</span>
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block">Potencia tu negocio</span>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">Diseñado para vender de forma simple</h1>
           <p className="text-sm text-slate-500 max-w-md mx-auto">Olvídate de las configuraciones bancarias complejas, envíos tardíos y comisiones abusivas.</p>
         </div>
