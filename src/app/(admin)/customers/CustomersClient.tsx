@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface Customer {
   id: string
@@ -23,9 +24,19 @@ interface CustomersClientProps {
 }
 
 export default function CustomersClient({ store, initialCustomers }: CustomersClientProps) {
-  const [customers] = useState<Customer[]>(initialCustomers)
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterSegment, setFilterSegment] = useState<'all' | 'frequent' | 'new' | 'inactive'>('all')
+
+  // Estados Modal Crear/Editar Cliente
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [custName, setCustName] = useState('')
+  const [custPhone, setCustPhone] = useState('')
+  const [custEmail, setCustEmail] = useState('')
+  const [loadingSave, setLoadingSave] = useState(false)
+
+  const supabase = createClient()
 
   const formatCurrency = (amount: number) => {
     const currency = store.currency_code || 'PEN'
@@ -36,6 +47,85 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
       style: 'currency',
       currency: currency,
     }).format(amount)
+  }
+
+  // Abrir Modal de Crear / Editar
+  const handleOpenCustomerModal = (customer: Customer | null) => {
+    setSelectedCustomer(customer)
+    if (customer) {
+      setCustName(customer.name)
+      setCustPhone(customer.phone)
+      setCustEmail(customer.email || '')
+    } else {
+      setCustName('')
+      setCustPhone('+51')
+      setCustEmail('')
+    }
+    setIsCustomerModalOpen(true)
+  }
+
+  // Guardar Cliente (Crear / Editar)
+  const handleSaveCustomer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!custName.trim() || !custPhone.trim()) return
+
+    setLoadingSave(true)
+    const cleanPhone = custPhone.startsWith('+') ? custPhone : `+${custPhone.trim()}`
+
+    if (selectedCustomer) {
+      // Editar
+      const { data, error } = await supabase
+        .from('customers')
+        .update({
+          name: custName.trim(),
+          phone: cleanPhone,
+          email: custEmail.trim() || null,
+        })
+        .eq('id', selectedCustomer.id)
+        .select()
+        .single()
+
+      if (!error && data) {
+        setCustomers((prev) => prev.map((c) => c.id === selectedCustomer.id ? { ...c, ...data } : c))
+        setIsCustomerModalOpen(false)
+      }
+    } else {
+      // Crear
+      const { data, error } = await supabase
+        .from('customers')
+        .insert({
+          store_id: store.id,
+          name: custName.trim(),
+          phone: cleanPhone,
+          email: custEmail.trim() || null,
+          orders_count: 0,
+          total_spent: 0
+        })
+        .select()
+        .single()
+
+      if (!error && data) {
+        setCustomers((prev) => [data, ...prev])
+        setIsCustomerModalOpen(false)
+      }
+    }
+
+    setLoadingSave(false)
+  }
+
+  // Eliminar Cliente
+  const handleDeleteCustomer = async (customerId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('¿Estás seguro de eliminar este registro de cliente?')) return
+
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', customerId)
+
+    if (!error) {
+      setCustomers((prev) => prev.filter((c) => c.id !== customerId))
+    }
   }
 
   // Segmentación y filtros
@@ -50,7 +140,6 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
       return cust.orders_count >= 5
     }
     if (filterSegment === 'new') {
-      // Creados en los últimos 7 días
       const diffTime = Math.abs(Date.now() - new Date(cust.created_at).getTime())
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       return diffDays <= 7
@@ -78,7 +167,7 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
 
   return (
     <div className="space-y-8 font-body-base text-on-surface">
-      {/* Cabecera (Diseño de Stitch) */}
+      {/* Cabecera */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-primary">Gestión de Clientes</h2>
@@ -86,103 +175,96 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
             Administra la base de datos de tus compradores, revisa su historial de pedidos y fidelidad.
           </p>
         </div>
-        <button className="bg-admin-deep-blue text-on-primary px-5 py-2.5 rounded text-xs font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <span className="material-symbols-outlined text-[18px]">download</span>
-          <span>Exportar Clientes</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => handleOpenCustomerModal(null)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <span>Añadir Cliente</span>
+          </button>
+        </div>
       </div>
 
-      {/* KPIs Bento Grid (Diseño de Stitch) */}
+      {/* KPIs Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* KPI 1 */}
-        <div className="bg-surface-container-lowest border border-border-subtle rounded-lg p-6 flex flex-col gap-2 shadow-sm">
+        <div className="bg-surface-container-lowest border border-border-subtle rounded-xl p-6 flex flex-col gap-2 shadow-sm">
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total Clientes</span>
           <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold text-primary">{totalCustomers}</span>
-            <span className="text-status-completed text-xs font-bold flex items-center mb-1">
-              <span className="material-symbols-outlined text-[16px] mr-0.5">trending_up</span> +12%
-            </span>
-          </div>
-        </div>
-        
-        {/* KPI 2 */}
-        <div className="bg-surface-container-lowest border border-border-subtle rounded-lg p-6 flex flex-col gap-2 shadow-sm">
-          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Clientes Recurrentes</span>
-          <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold text-primary">{recurrentPercentage}%</span>
-            <span className="text-status-completed text-xs font-bold flex items-center mb-1">
-              <span className="material-symbols-outlined text-[16px] mr-0.5">trending_up</span> +3%
-            </span>
+            <span className="text-3xl font-black text-slate-900">{totalCustomers}</span>
           </div>
         </div>
 
-        {/* KPI 3 */}
-        <div className="bg-surface-container-lowest border border-border-subtle rounded-lg p-6 flex flex-col gap-2 shadow-sm">
-          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket Promedio</span>
+        <div className="bg-surface-container-lowest border border-border-subtle rounded-xl p-6 flex flex-col gap-2 shadow-sm">
+          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Clientes Recurrentes</span>
           <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold text-primary">{formatCurrency(ticketAverage)}</span>
-            <span className="text-on-surface-variant text-xs mb-1 font-bold">{store.currency_code || 'PEN'}</span>
+            <span className="text-3xl font-black text-emerald-600">{frequentCustomers}</span>
+            <span className="text-xs font-bold text-emerald-600 mb-1">({recurrentPercentage}%)</span>
+          </div>
+        </div>
+
+        <div className="bg-surface-container-lowest border border-border-subtle rounded-xl p-6 flex flex-col gap-2 shadow-sm">
+          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket Promedio por Cliente</span>
+          <div className="flex items-end gap-3">
+            <span className="text-3xl font-black text-slate-900">{formatCurrency(ticketAverage)}</span>
           </div>
         </div>
       </div>
 
-      {/* Controles de Búsqueda y Segmentación (Diseño de Stitch) */}
-      <div className="bg-surface-container-lowest border border-border-subtle rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
-        <div className="relative w-full md:max-w-md">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      {/* Controles de Búsqueda y Segmentación */}
+      <div className="bg-white border border-border-subtle rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 items-center shadow-sm">
+        <div className="relative w-full md:w-72">
+          <span className="material-symbols-outlined text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 text-[18px]">search</span>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nombre o teléfono..."
-            className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded bg-slate-50 focus:outline-none focus:border-admin-deep-blue focus:ring-1 focus:ring-admin-deep-blue text-xs transition-all"
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-600 bg-slate-50/50"
           />
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
           {[
             { id: 'all', label: 'Todos' },
-            { id: 'frequent', label: 'Frecuentes' },
-            { id: 'new', label: 'Nuevos' },
-            { id: 'inactive', label: 'Inactivos' },
-          ].map((seg) => {
-            const active = filterSegment === seg.id
-            return (
-              <button
-                key={seg.id}
-                onClick={() => setFilterSegment(seg.id as any)}
-                className={`px-4 py-1.5 rounded-full border text-[10px] uppercase font-bold tracking-wider transition-colors whitespace-nowrap ${
-                  active 
-                    ? 'bg-admin-deep-blue text-on-primary border-transparent' 
-                    : 'border-border-subtle text-on-surface-variant hover:bg-surface-container-low'
-                }`}
-              >
-                {seg.label}
-              </button>
-            )
-          })}
+            { id: 'frequent', label: 'Recurrentes (5+)' },
+            { id: 'new', label: 'Nuevos (7 días)' },
+            { id: 'inactive', label: 'Sin Compras' },
+          ].map((seg) => (
+            <button
+              key={seg.id}
+              onClick={() => setFilterSegment(seg.id as any)}
+              className={`px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
+                filterSegment === seg.id 
+                  ? 'bg-slate-900 text-white border-transparent shadow-xs' 
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {seg.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tabla de Clientes (Diseño de Stitch con Acciones Flotantes en Hover) */}
-      <div className="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden shadow-sm">
+      {/* Tabla de Clientes */}
+      <div className="bg-white border border-border-subtle rounded-xl overflow-hidden shadow-sm">
         {filteredCustomers.length === 0 ? (
           <div className="text-center py-16 text-slate-400">
             <span className="material-symbols-outlined text-[40px] text-slate-200 mx-auto mb-2 block">group</span>
             <div className="font-bold text-sm text-slate-700">No se encontraron clientes</div>
-            <p className="text-xs text-slate-500 mt-1">Intenta con otro filtro o consulta.</p>
+            <p className="text-xs text-slate-500 mt-1">Usa el botón superior para agregar un cliente a tu tienda.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-surface-container-low border-b border-border-subtle text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+              <thead className="bg-slate-50 border-b border-border-subtle text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-4">Cliente</th>
                   <th className="px-6 py-4 w-[180px]">WhatsApp</th>
                   <th className="px-6 py-4 text-right w-[110px]">Pedidos</th>
                   <th className="px-6 py-4 text-right w-[140px]">Total Gastado</th>
                   <th className="px-6 py-4 w-[160px]">Última Compra</th>
-                  <th className="px-6 py-4 text-center w-[120px]">Acciones</th>
+                  <th className="px-6 py-4 text-center w-[140px]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-border-subtle text-slate-800">
@@ -191,23 +273,24 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
                   return (
                     <tr 
                       key={cust.id} 
-                      className="hover:bg-slate-50 transition-colors group"
+                      className="hover:bg-slate-50 transition-colors group cursor-pointer"
+                      onClick={() => handleOpenCustomerModal(cust)}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-secondary-container/10 text-secondary flex items-center justify-center font-bold text-[10px]">
+                          <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-xs">
                             {getInitials(cust.name)}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{cust.name}</p>
-                            <p className="text-on-surface-variant text-[10px]">{cust.email || 'Sin correo registrado'}</p>
+                            <p className="font-bold text-slate-900 text-sm">{cust.name}</p>
+                            <p className="text-slate-400 text-[10px]">{cust.email || 'Sin correo registrado'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-on-surface-variant font-medium">{cust.phone}</td>
+                      <td className="px-6 py-4 text-slate-600 font-medium">{cust.phone}</td>
                       <td className="px-6 py-4 text-right font-bold text-slate-900">{cust.orders_count}</td>
-                      <td className="px-6 py-4 text-right font-bold text-primary text-sm">{formatCurrency(cust.total_spent)}</td>
-                      <td className="px-6 py-4 text-on-surface-variant">
+                      <td className="px-6 py-4 text-right font-bold text-blue-600 text-sm">{formatCurrency(cust.total_spent)}</td>
+                      <td className="px-6 py-4 text-slate-500 font-medium">
                         {cust.last_order_date ? (
                           new Date(cust.last_order_date).toLocaleDateString('es-ES', {
                             day: '2-digit',
@@ -219,18 +302,36 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
                         )}
                       </td>
                       
-                      {/* Acciones flotantes por hover (Diseño de Stitch) */}
+                      {/* Acciones */}
                       <td className="px-6 py-4">
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-center gap-2">
                           <a 
                             href={whatsappLink} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="p-1.5 text-on-surface-variant hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                             title="Enviar WhatsApp"
                           >
-                            <span className="material-symbols-outlined text-[18px] block">chat</span>
+                            <span className="material-symbols-outlined text-[18px]">chat</span>
                           </a>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenCustomerModal(cust)
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar cliente"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeleteCustomer(cust.id, e)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Eliminar cliente"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -241,6 +342,77 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
           </div>
         )}
       </div>
+
+      {/* MODAL CREAR / EDITAR CLIENTE */}
+      {isCustomerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="fixed inset-0 bg-transparent" onClick={() => setIsCustomerModalOpen(false)} />
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden z-10 border border-slate-200">
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 text-sm">
+                {selectedCustomer ? 'Editar Ficha de Cliente' : 'Añadir Nuevo Cliente'}
+              </h3>
+              <button onClick={() => setIsCustomerModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomer} className="p-6 space-y-4 text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="block text-slate-700">Nombre Completo</label>
+                <input
+                  type="text"
+                  value={custName}
+                  onChange={(e) => setCustName(e.target.value)}
+                  placeholder="Ej. Juan Pérez"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-slate-700">Teléfono (WhatsApp E.164)</label>
+                <input
+                  type="text"
+                  value={custPhone}
+                  onChange={(e) => setCustPhone(e.target.value)}
+                  placeholder="+51987654321"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-slate-700">Correo Electrónico (Opcional)</label>
+                <input
+                  type="email"
+                  value={custEmail}
+                  onChange={(e) => setCustEmail(e.target.value)}
+                  placeholder="cliente@ejemplo.com"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingSave}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs disabled:opacity-50"
+                >
+                  {loadingSave ? 'Guardando...' : 'Guardar Cliente'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

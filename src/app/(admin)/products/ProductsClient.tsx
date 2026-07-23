@@ -53,11 +53,54 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [relations, setRelations] = useState<CatalogRelation[]>(initialRelations)
 
+  const [viewMode, setViewMode] = useState<'grid' | 'pos'>('grid')
+
   const [optimisticProducts, setOptimisticProducts] = useOptimistic(
     products,
     (state, update: { id: string; is_available: boolean }) =>
       state.map((p) => (p.id === update.id ? { ...p, is_available: update.is_available } : p))
   )
+
+  // Duplicar producto velozmente
+  const handleDuplicateProduct = async (productToDup: Product, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const duplicatedTitle = `${productToDup.title} (Copia)`
+    const generatedSlug = `${productToDup.slug}-copia-${Date.now().toString().slice(-4)}`
+    const maxPosition = products.reduce((max, prod) => prod.position > max ? prod.position : max, 0)
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        store_id: store.id,
+        title: duplicatedTitle,
+        slug: generatedSlug,
+        description: productToDup.description,
+        price: productToDup.price,
+        category_id: productToDup.category_id,
+        images: productToDup.images,
+        is_available: productToDup.is_available,
+        position: maxPosition + 1,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setProducts((prev) => [...prev, data])
+      // Copiar relaciones de catálogos
+      const associatedCats = relations
+        .filter((r) => r.product_id === productToDup.id)
+        .map((r) => r.catalog_id)
+
+      if (associatedCats.length > 0) {
+        const insertData = associatedCats.map((cid) => ({
+          catalog_id: cid,
+          product_id: data.id,
+        }))
+        await supabase.from('catalog_products').insert(insertData)
+        setRelations((prev) => [...prev, ...insertData])
+      }
+    }
+  }
 
   // Estados Categorías
   const [newCatName, setNewCatName] = useState('')
@@ -138,23 +181,40 @@ export default function ProductsClient({ store, initialCategories, initialProduc
       .replace(/(^-|-$)+/g, '')
 
     const maxPosition = categories.reduce((max, cat) => cat.position > max ? cat.position : max, 0)
+    const tempId = `temp-${Date.now()}`
+    const tempCategory: Category = {
+      id: tempId,
+      name: newCatName.trim(),
+      slug,
+      position: maxPosition + 1,
+      is_active: true
+    }
+
+    // ⚡ 1. Respuesta Optimista Instantánea (0 ms)
+    setCategories((prev) => [...prev, tempCategory])
+    setNewCatName('')
 
     const { data, error } = await supabase
       .from('categories')
       .insert({
         store_id: store.id,
-        name: newCatName.trim(),
-        slug,
-        position: maxPosition + 1,
+        name: tempCategory.name,
+        slug: tempCategory.slug,
+        position: tempCategory.position,
         is_active: true
       })
       .select()
       .single()
 
-    if (!error && data) {
-      setCategories((prev) => [...prev, data])
-      setNewCatName('')
+    if (error) {
+      // ⏪ 2. Rollback automático si falla la petición por red
+      setCategories((prev) => prev.filter((c) => c.id !== tempId))
+      alert('Error de conexión al guardar la categoría. Se ha revertido el cambio.')
+    } else if (data) {
+      // Reemplazar ID temporal con ID fidedigno de BD
+      setCategories((prev) => prev.map((c) => c.id === tempId ? data : c))
     }
+    setLoadingCat(false)
     setLoadingCat(false)
   }
 
@@ -405,6 +465,29 @@ export default function ProductsClient({ store, initialCategories, initialProduc
             </button>
           </div>
 
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded border border-border-subtle mr-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded transition-all flex items-center gap-1 text-xs font-bold ${
+                viewMode === 'grid' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+              title="Vista en cuadrícula"
+            >
+              <span className="material-symbols-outlined text-[16px]">grid_view</span>
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              onClick={() => setViewMode('pos')}
+              className={`p-1.5 rounded transition-all flex items-center gap-1 text-xs font-bold ${
+                viewMode === 'pos' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+              title="Vista rápida lista POS"
+            >
+              <span className="material-symbols-outlined text-[16px]">view_list</span>
+              <span className="hidden sm:inline">POS Lista</span>
+            </button>
+          </div>
+
           <button
             onClick={() => handleOpenProductModal(null)}
             className="flex items-center gap-2 bg-admin-deep-blue text-on-primary px-5 py-2 rounded font-bold text-xs hover:opacity-90 transition-opacity shadow-sm"
@@ -415,7 +498,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
         </div>
       </div>
 
-      {/* PESTAÑA: PRODUCTOS (Diseño Grid de Tarjetas de Stitch) */}
+      {/* PESTAÑA: PRODUCTOS (Diseño Grid o Lista POS) */}
       {activeTab === 'products' && (
         <>
           {optimisticProducts.length === 0 ? (
@@ -424,7 +507,71 @@ export default function ProductsClient({ store, initialCategories, initialProduc
               <div className="font-bold text-sm text-slate-700">No hay productos en tu catálogo</div>
               <p className="text-xs text-slate-500 mt-1">Usa el botón superior para añadir el primer producto.</p>
             </div>
+          ) : viewMode === 'pos' ? (
+            /* VISTA LISTA POS ESTILO KYTE */
+            <div className="bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm divide-y divide-slate-100">
+              {optimisticProducts.map((product) => {
+                const categoryName = categories.find((c) => c.id === product.category_id)?.name || 'Sin categoría'
+                return (
+                  <div
+                    key={product.id}
+                    onClick={() => handleOpenProductModal(product)}
+                    className={`p-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer ${
+                      !product.is_available ? 'bg-slate-50/60 opacity-75' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                        {product.images[0] ? (
+                          <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-slate-300 text-[20px]">image</span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs text-primary truncate">{product.title}</div>
+                        <div className="text-[10px] text-slate-500 font-semibold">{categoryName} • SKU: {product.id.slice(0, 5).toUpperCase()}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <span className="font-bold text-xs text-slate-900">{formatCurrency(product.price)}</span>
+                      
+                      {/* Botón de Duplicado Rápido */}
+                      <button
+                        onClick={(e) => handleDuplicateProduct(product, e)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="Duplicar producto"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                      </button>
+
+                      {/* Toggle de Disponibilidad */}
+                      <div 
+                        className="flex items-center gap-1.5 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleProductAvailable(product.id, product.is_available)
+                        }}
+                      >
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                          product.is_available ? 'text-emerald-600' : 'text-slate-400'
+                        }`}>
+                          {product.is_available ? 'En Stock' : 'Agotado'}
+                        </span>
+                        <div className={`w-9 h-5 rounded-full transition-colors p-0.5 flex items-center ${
+                          product.is_available ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                        }`}>
+                          <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
+            /* VISTA GRID DE FOTOS */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {optimisticProducts.map((product) => {
                 const categoryName = categories.find((c) => c.id === product.category_id)?.name || 'Sin categoría'

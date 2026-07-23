@@ -9,6 +9,7 @@ interface TenantPageProps {
 }
 
 export default async function TenantPage({ params }: TenantPageProps) {
+  await new Promise((resolve) => setTimeout(resolve, 500))
   const { domain } = await params
   const supabase = await createClient()
 

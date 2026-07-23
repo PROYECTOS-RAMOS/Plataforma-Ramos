@@ -202,10 +202,10 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
     }).format(amount)
   }
 
-  // Cálculos de métricas
-  const ticketAverage = metrics.totalOrders > 0 
-    ? metrics.totalSales / metrics.totalOrders 
-    : 0
+  // 🔒 Memoización de Cálculos de Métricas
+  const ticketAverage = React.useMemo(() => {
+    return metrics.totalOrders > 0 ? metrics.totalSales / metrics.totalOrders : 0
+  }, [metrics.totalOrders, metrics.totalSales])
 
   const planPercentage = Math.min((planLimits.currentProducts / planLimits.maxProducts) * 100, 100)
   
@@ -218,15 +218,15 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
 
   const publicStoreUrl = `http://${store.slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'}`
 
-  // Configuración del gráfico
-  const currentChartData = chartPeriod === 'this-week' ? DEMO_CHART_THIS_WEEK : DEMO_CHART_LAST_WEEK
+  // Configuración del gráfico memoizada
+  const currentChartData = React.useMemo(() => {
+    return chartPeriod === 'this-week' ? DEMO_CHART_THIS_WEEK : DEMO_CHART_LAST_WEEK
+  }, [chartPeriod])
   
   // Datos del gráfico si no está en modo demo (construidos dinámicamente)
-  const getChartData = () => {
+  const activeChartData = React.useMemo(() => {
     if (isDemoMode) return currentChartData
     
-    // Si hay datos reales pero la tienda es nueva, simulamos una distribución basada en las ventas
-    // para que la interfaz se vea atractiva pero proporcional.
     if (metrics.totalSales > 0) {
       const baseValue = metrics.totalSales / 7
       return [
@@ -240,7 +240,6 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
       ]
     }
 
-    // Tienda vacía sin ventas reales
     return [
       { day: 'Lun', sales: 0, orders: 0 },
       { day: 'Mar', sales: 0, orders: 0 },
@@ -250,10 +249,10 @@ export default function DashboardClient({ store, initialMetrics, planLimits }: D
       { day: 'Sáb', sales: 0, orders: 0 },
       { day: 'Dom', sales: 0, orders: 0 }
     ]
-  }
+  }, [isDemoMode, currentChartData, metrics.totalSales, metrics.totalOrders])
 
-  const chartData = getChartData()
-  const maxSalesValue = Math.max(...chartData.map(d => d.sales), 100)
+  const chartData = activeChartData
+  const maxSalesValue = Math.max(...chartData.map((d) => d.sales), 100)
 
   // Calcular tiempo relativo simple para los pedidos
   const getRelativeTime = (isoString: string) => {

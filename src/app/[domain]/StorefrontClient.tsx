@@ -951,11 +951,14 @@ export default function StorefrontClient({ store, categories, products, shipping
         </div>
       )}
 
-      {/* 5. MODAL DE VARIANTES */}
+      {/* 5. MODAL / BOTTOM SHEET DE OPCIONES DE PRODUCTO */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 md:p-4 bg-black/60">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs">
           <div className="fixed inset-0 bg-transparent" onClick={() => setSelectedProduct(null)} />
-          <div className="relative bg-white w-full max-w-md rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-300">
+          <div className="relative bg-white w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 shadow-2xl overflow-hidden z-10">
+            {/* Tirador táctil visual para teléfonos */}
+            <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2 sm:hidden flex-shrink-0" />
+            
             {/* Cabecera */}
             <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 bg-slate-50">
               <div>
@@ -1047,6 +1050,37 @@ export default function StorefrontClient({ store, categories, products, shipping
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* BARRA DE PROGRESO DE ENVÍO GRATIS */}
+            {!isCheckoutStep && shippingRules.length > 0 && (
+              (() => {
+                const freeRule = shippingRules.find((r) => Number(r.price) === 0 || Number(r.min_order_amount) > 0)
+                const minThreshold = freeRule ? Number(freeRule.min_order_amount) : 0
+                if (minThreshold <= 0) return null
+
+                const needed = Math.max(0, minThreshold - cartSubtotal)
+                const progress = Math.min(100, Math.round((cartSubtotal / minThreshold) * 100))
+
+                return (
+                  <div className="bg-slate-900 text-white p-3.5 border-b border-slate-800 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold">
+                      <Truck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      {needed > 0 ? (
+                        <span>Agrega <span className="text-emerald-400 font-extrabold">{formatPrice(needed)}</span> más para <span className="text-emerald-400 font-extrabold">ENVÍO GRATIS</span></span>
+                      ) : (
+                        <span className="text-emerald-400 font-extrabold">¡Felicidades! Tienes ENVÍO GRATIS</span>
+                      )}
+                    </div>
+                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden p-0.5">
+                      <div 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })()
+            )}
 
             {/* CONTENIDO 1: RESUMEN DE ARTÍCULOS EN CARRITO */}
             {!isCheckoutStep && (

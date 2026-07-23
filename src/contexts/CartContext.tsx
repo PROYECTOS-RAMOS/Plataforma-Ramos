@@ -261,7 +261,13 @@ export function CartProvider({ children, storeId }: CartProviderProps) {
       `Gracias por comprar con nosotros.`
 
     const storePhoneClean = store.whatsapp_phone.replace(/[+\s-]/g, '')
-    const url = `https://api.whatsapp.com/send?phone=${storePhoneClean}&text=${encodeURIComponent(message)}`
+    const encodedMessage = encodeURIComponent(message)
+
+    // Detectar si el usuario está navegando desde un dispositivo móvil para usar el protocolo nativo whatsapp://
+    const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const url = isMobile 
+      ? `whatsapp://send?phone=${storePhoneClean}&text=${encodedMessage}`
+      : `https://api.whatsapp.com/send?phone=${storePhoneClean}&text=${encodedMessage}`
 
     // 🔒 4. Limpieza del carrito al confirmar pedido
     clearCart()

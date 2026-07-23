@@ -417,18 +417,54 @@ export default function SettingsClient({ store, members, isCollaborator, collabo
               </div>
 
               <div className="pt-6 border-t border-border-subtle space-y-4">
-                <h4 className="font-bold text-slate-900 text-sm">Visualización del Catálogo</h4>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={showDecimals}
-                      onChange={(e) => setShowDecimals(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900 focus:ring-admin-deep-blue"
-                      disabled={!isUserAdmin}
-                    />
-                    <span className="text-xs text-slate-700 font-bold">Mostrar decimales en los precios (Ej. $10.50 en lugar de $11)</span>
-                  </label>
+                <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-blue-600 text-[20px]">smartphone</span>
+                  <span>Simulador en Tiempo Real (Live Preview de tu Tienda)</span>
+                </h4>
+                <p className="text-xs text-slate-500 font-medium">Así es como verán tus clientes el encabezado y botón de compra de tu tienda en celulares:</p>
+                
+                {/* Mockup de Previsualización en Vivo */}
+                <div className="bg-slate-900 p-4 rounded-2xl max-w-sm mx-auto shadow-xl border border-slate-800 text-white space-y-4 transition-all">
+                  {/* Encabezado Simulado */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs overflow-hidden border border-white/20">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{storeName.charAt(0) || 'T'}</span>
+                        )}
+                      </div>
+                      <span className="font-bold text-xs truncate max-w-[150px]">{storeName || 'Nombre de tu Tienda'}</span>
+                    </div>
+                    <div 
+                      className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-sm flex items-center gap-1"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <span className="material-symbols-outlined text-[12px]">shopping_bag</span>
+                      <span>Carrito</span>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta de Producto Simulada */}
+                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 space-y-2">
+                    <div className="h-24 bg-slate-700/60 rounded-lg flex items-center justify-center text-slate-500 font-mono text-[10px]">
+                      [Foto de tu producto]
+                    </div>
+                    <div className="font-bold text-xs text-white">Producto de Muestra</div>
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="font-bold text-xs text-slate-300">
+                        {currencyCode === 'PEN' ? 'S/' : '$'} {showDecimals ? '45.00' : '45'}
+                      </span>
+                      <button 
+                        type="button"
+                        className="px-3 py-1.5 rounded text-[10px] font-bold text-white shadow-sm"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        + Agregar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

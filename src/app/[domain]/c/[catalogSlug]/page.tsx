@@ -7,6 +7,7 @@ interface CatalogPageProps {
 }
 
 export default async function CatalogPage({ params }: CatalogPageProps) {
+  await new Promise((resolve) => setTimeout(resolve, 500))
   const { domain, catalogSlug } = await params
   const supabase = await createClient()
 

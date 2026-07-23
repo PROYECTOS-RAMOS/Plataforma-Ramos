@@ -16,14 +16,15 @@ export default async function CustomersPage() {
   // 2. Obtener listado de pedidos de la tienda para calcular métricas dinámicas de clientes
   const { data: rawOrders } = await supabase
     .from('orders')
-    .select('id, customer_id, total, status, created_at')
+    .select('id, customer_id, customer_phone, total, status, created_at')
     .eq('store_id', store.id)
 
   const orders = rawOrders || []
   
-  // 3. Enriquecer los clientes con contadores de órdenes y total gastado (evita crashes por columnas inexistentes)
+  // 3. Enriquecer los clientes con contadores de órdenes y total gastado
   const customers = (rawCustomers || []).map((cust) => {
-    const custOrders = orders.filter(o => o.customer_id === cust.id)
+    // Vincular pedidos por ID de cliente o por coincidencias en número de teléfono
+    const custOrders = orders.filter(o => o.customer_id === cust.id || (o.customer_phone && o.customer_phone.trim() === cust.phone.trim()))
     const completedOrders = custOrders.filter(o => o.status === 'completed')
     const totalSpent = completedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0)
     

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Link } from 'next-view-transitions'
+import NextLink from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -71,23 +71,34 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   }
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col justify-between bg-surface dark:bg-inverse-surface py-6 px-4">
+    <div className="h-full flex flex-col justify-between bg-slate-900 text-white py-6 px-4">
       <div className="space-y-6">
         {/* Cabecera del Panel */}
         <div className="px-3 mb-2 flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-primary dark:text-primary-fixed">Admin Panel</h1>
-          <p className="text-xs text-on-surface-variant font-semibold">
-            {store ? store.name : 'Plataforma Ramos'}
-          </p>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shadow-md">
+              R
+            </div>
+            <div>
+              <h1 className="text-sm font-black tracking-wider uppercase text-white">PLATAFORMA RAMOS</h1>
+              <p className="text-[10px] text-slate-400 font-semibold truncate max-w-[170px]">
+                {store ? store.name : 'Panel Administrador'}
+              </p>
+            </div>
+          </div>
+
           {store && (
             <a 
               href={publicStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-55 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold rounded-lg transition-all w-fit border border-indigo-100 dark:border-indigo-900/50 shadow-sm"
+              className="mt-3 inline-flex items-center justify-between px-3 py-2 bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white text-[11px] font-bold rounded-xl transition-all border border-slate-700/60 shadow-xs group"
             >
-              <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-              <span>Visitar mi Tienda</span>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Tienda Pública</span>
+              </div>
+              <span className="material-symbols-outlined text-[15px] group-hover:translate-x-0.5 transition-transform text-slate-400">open_in_new</span>
             </a>
           )}
         </div>
@@ -97,42 +108,45 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
           {navigation.map((item) => {
             const active = isActiveLink(item.href)
             return (
-              <Link
+              <NextLink
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-all ${
+                prefetch={true}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   active 
-                    ? 'text-secondary dark:text-secondary-fixed-dim bg-secondary-container/10 font-bold opacity-90' 
-                    : 'text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-highest'
+                    ? 'text-white bg-blue-600 shadow-md shadow-blue-600/20' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                <span className={`material-symbols-outlined text-[20px] ${active ? 'text-white' : 'text-slate-400'}`}>
+                  {item.icon}
+                </span>
                 <span>{item.name}</span>
-              </Link>
+              </NextLink>
             )
           })}
         </nav>
       </div>
 
       {/* Perfil del Vendedor y Logout */}
-      <div className="border-t border-border-subtle dark:border-outline-variant pt-4 space-y-4">
-        <div className="flex items-center gap-3 px-3">
+      <div className="border-t border-slate-800/80 pt-4 space-y-3">
+        <div className="flex items-center gap-3 px-2">
           {profile.avatar_url ? (
             <img 
               src={profile.avatar_url} 
               alt={profile.full_name} 
-              className="w-10 h-10 rounded-full object-cover border border-border-subtle"
+              className="w-9 h-9 rounded-full object-cover border border-slate-700"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-secondary-container/10 text-secondary flex items-center justify-center font-bold text-sm">
+            <div className="w-9 h-9 rounded-full bg-slate-800 text-blue-400 border border-slate-700 flex items-center justify-center font-black text-xs">
               {profile.full_name.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1 text-xs">
-            <div className="font-bold text-slate-900 truncate">{profile.full_name}</div>
-            <div className="text-on-surface-variant truncate">
-              {profile.role === 'super_admin' ? 'Super Admin' : 'Vendedor'}
+            <div className="font-bold text-white truncate">{profile.full_name}</div>
+            <div className="text-[10px] text-slate-400 truncate">
+              {profile.role === 'super_admin' ? 'Super Admin' : 'Vendedor Activo'}
             </div>
           </div>
         </div>
@@ -198,23 +212,28 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
 
       {/* Contenido Principal de Trabajo */}
       <div className="flex-1 flex flex-col md:ml-[280px] min-h-screen">
-        <header className="bg-surface border-b border-border-subtle h-16 px-6 hidden md:flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center bg-surface-container-low rounded px-3 py-1.5 w-64 border border-border-subtle">
-            <span className="material-symbols-outlined text-on-surface-variant mr-2 text-[18px]">search</span>
-            <input className="bg-transparent border-none focus:outline-none text-xs w-full p-0" placeholder="Buscar..." type="text" />
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-16 px-6 hidden md:flex items-center justify-between sticky top-0 z-30 shadow-subtle">
+          <div className="flex items-center bg-slate-100/70 hover:bg-slate-100 rounded-xl px-3.5 py-1.5 w-72 border border-slate-200/60 transition-colors">
+            <span className="material-symbols-outlined text-slate-400 mr-2 text-[18px]">search</span>
+            <input className="bg-transparent border-none focus:outline-none text-xs text-slate-700 w-full p-0 font-medium" placeholder="Buscar productos, pedidos, clientes..." type="text" />
           </div>
-          <div className="flex items-center gap-4 text-on-surface-variant">
-            <button className="hover:opacity-80">
+          <div className="flex items-center gap-3 text-slate-600">
+            <button className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors relative" title="Notificaciones">
               <span className="material-symbols-outlined text-[20px]">notifications</span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600" />
             </button>
-            <button className="hover:opacity-80">
-              <span className="material-symbols-outlined text-[20px]">account_circle</span>
-            </button>
+            <div className="h-5 w-px bg-slate-200" />
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-xs">
+                {profile.full_name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs font-bold text-slate-800">{profile.full_name}</span>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 bg-surface-container-low overflow-y-auto">
-          <div className="max-w-6xl mx-auto w-full">
+        <main className="flex-1 p-6 md:p-8 bg-slate-50/60 overflow-y-auto">
+          <div className="max-w-7xl mx-auto w-full space-y-6">
             <AnimatePage key={pathname}>
               {children}
             </AnimatePage>
