@@ -1,12 +1,24 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'next-view-transitions'
 import Logo from '@/components/marketing/Logo'
 import { Menu, X, ChevronRight, User, ShoppingBag } from 'lucide-react'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Bloquear el scroll de la página cuando el menú móvil está abierto
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
 
   const navLinks = [
     { href: '/caracteristicas', label: 'Características' },
@@ -17,21 +29,21 @@ export default function Header() {
   ]
 
   return (
-    <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50 transition-all duration-300">
+    <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
         
         {/* Logo responsivo */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 group z-50">
-          <Logo size={36} className="sm:hidden block group-hover:scale-105 transition-transform" />
-          <Logo size={46} className="hidden sm:block group-hover:scale-105 transition-transform" />
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group z-50" onClick={() => setMobileMenuOpen(false)}>
+          <Logo size={32} className="sm:hidden block group-hover:scale-105 transition-transform" />
+          <Logo size={42} className="hidden sm:block group-hover:scale-105 transition-transform" />
           
-          <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tight flex items-center gap-1 sm:gap-1.5 select-none">
+          <span className="font-black text-base sm:text-xl md:text-2xl tracking-tight flex items-center gap-1 sm:gap-1.5 select-none">
             <span className="text-[#EF4444]">Plataforma</span>
             <span className="text-[#3B82F6]">Ramos</span>
           </span>
           
           {/* Ocultar el logo en espejo del lado derecho en celulares pequeños para dar espacio */}
-          <Logo size={46} mirror className="hidden md:block group-hover:scale-105 transition-transform" />
+          <Logo size={42} mirror className="hidden md:block group-hover:scale-105 transition-transform" />
         </Link>
 
         {/* Navigation para pantallas grandes */}
@@ -66,26 +78,28 @@ export default function Header() {
         {/* Botón de Menú Hamburguesa para Móviles */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors z-50"
+          className="lg:hidden p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors z-50"
           aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
-      {/* Menú Desplegable Móvil */}
+      {/* Menú Desplegable Móvil que ocupa toda la pantalla debajo del header */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-[64px] sm:top-[80px] bg-white z-40 flex flex-col justify-between border-t border-slate-100 animate-in fade-in slide-in-from-top-4 duration-200">
-          <div className="px-6 py-8 space-y-5 overflow-y-auto">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Menú de Navegación</span>
+        <div className="lg:hidden fixed inset-x-0 bottom-0 top-[64px] sm:top-[80px] bg-white z-40 flex flex-col justify-between overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 border-t border-slate-200/80">
+          <div className="px-5 py-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block px-1">
+              Menú de Navegación
+            </span>
             
-            <nav className="flex flex-col gap-5 text-sm font-bold uppercase tracking-wider text-slate-800">
+            <nav className="flex flex-col gap-1 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between py-2 border-b border-slate-50 hover:text-blue-600 transition-colors"
+                  className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-blue-50/60 active:bg-blue-50 hover:text-blue-600 transition-colors border-b border-slate-100/80"
                 >
                   <span>{link.label}</span>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -94,23 +108,23 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Acciones del menú inferior móvil */}
-          <div className="p-6 bg-slate-50 border-t border-slate-100 space-y-3.5">
+          {/* Acciones de Iniciar Sesión y Registro en el Menú Inferior Móvil */}
+          <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-200/80 space-y-3 shrink-0 shadow-inner">
             <Link
               href="/login?mode=signin"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3.5 border border-slate-200 hover:bg-white text-center font-bold text-slate-700 rounded-2xl flex items-center justify-center gap-2 bg-white/50 text-xs uppercase tracking-wider transition-colors shadow-sm"
+              className="w-full py-3.5 px-4 border border-slate-300 hover:bg-white text-center font-bold text-slate-700 rounded-xl flex items-center justify-center gap-2 bg-white text-xs uppercase tracking-wider transition-all active:scale-[0.98] shadow-sm min-h-[44px]"
             >
-              <User className="w-4 h-4 text-slate-400" />
+              <User className="w-4 h-4 text-blue-600" />
               <span>Ingresar a mi Cuenta</span>
             </Link>
             
             <Link
               href="/login?mode=signup"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-center font-extrabold text-white rounded-2xl flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-blue-600/10 transition-all border border-blue-500/20"
+              className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-center font-extrabold text-white rounded-xl flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] border border-blue-500/20 min-h-[44px]"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4 text-white" />
               <span>Crear mi Tienda Gratis</span>
             </Link>
           </div>

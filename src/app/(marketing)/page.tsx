@@ -164,35 +164,35 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             Digitaliza tu negocio con una página web profesional. Crea catálogos y categorías adaptadas a tu giro de negocio, comparte enlaces directos de tus productos en WhatsApp y redes sociales, y recibe pedidos ordenados sin pagar comisiones.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2">
+          <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 justify-center lg:justify-start pt-2 w-full max-w-sm sm:max-w-none mx-auto lg:mx-0">
             <Link 
               href="/login?mode=signup" 
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-xl shadow-blue-600/15 flex items-center justify-center gap-2 transition-all hover:scale-[1.03] active:scale-95 group"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black tracking-wider uppercase shadow-xl shadow-blue-600/15 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 group min-h-[44px]"
             >
               <span className="text-white font-black">Crear Mi Página Web Gratis</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
             </Link>
             <Link 
               href="/como-funciona" 
-              className="px-8 py-4 border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold tracking-wider uppercase flex items-center justify-center transition-all hover:scale-[1.03]"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold tracking-wider uppercase flex items-center justify-center transition-all hover:scale-[1.02] active:scale-95 min-h-[44px]"
             >
               ¿Cómo funciona?
             </Link>
           </div>
 
           {/* Destacados rápidos */}
-          <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-200 max-w-sm sm:max-w-md mx-auto lg:mx-0 text-center lg:text-left">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-8 border-t border-slate-200 max-w-sm sm:max-w-md mx-auto lg:mx-0 text-center lg:text-left">
             <div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900">100%</div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Página Web Propia</div>
+              <div className="text-lg sm:text-2xl font-black text-slate-900">100%</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-tight">Página Web Propia</div>
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900">0%</div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Comisiones</div>
+              <div className="text-lg sm:text-2xl font-black text-slate-900">0%</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-tight">Comisiones</div>
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900">En 1 Clic</div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Enlace a WhatsApp</div>
+              <div className="text-lg sm:text-2xl font-black text-slate-900">En 1 Clic</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-tight">Enlace a WhatsApp</div>
             </div>
           </div>
         </div>
@@ -296,8 +296,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             
           </div>
 
-          {/* Alertas flotantes decorativas */}
-          <div className="absolute top-28 -right-12 bg-white border border-slate-100 p-3.5 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur max-w-[220px] hover:scale-105 transition-transform duration-300 z-20">
+          {/* Alertas flotantes decorativas (oculta desbordamiento en móviles muy angostos) */}
+          <div className="hidden sm:flex absolute top-28 -right-4 md:-right-12 bg-white border border-slate-100 p-3.5 rounded-2xl shadow-2xl items-center gap-3 backdrop-blur max-w-[220px] hover:scale-105 transition-transform duration-300 z-20">
             <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 font-bold">
               <Globe className="w-4 h-4" />
             </div>
