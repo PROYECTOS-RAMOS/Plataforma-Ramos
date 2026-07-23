@@ -170,16 +170,25 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
 
   return (
     <div className="min-h-screen bg-slate-50 text-on-surface flex flex-col md:flex-row antialiased">
-      {/* Menú de Cabecera Móvil */}
-      <div className="md:hidden bg-surface dark:bg-inverse-surface text-on-surface border-b border-border-subtle px-4 py-3 flex justify-between items-center z-40 sticky top-0">
-        <div className="flex items-center gap-2">
-          <span className="font-bold tracking-tight text-primary">RAMOS PANEL</span>
+      {/* Menú de Cabecera Móvil Estilizado */}
+      <div className="md:hidden bg-slate-900 text-white border-b border-slate-800 px-4 py-3 flex justify-between items-center z-40 sticky top-0 shadow-md">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-xs shadow-xs">
+            R
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-xs tracking-wider uppercase leading-none">PLATAFORMA RAMOS</span>
+            <span className="text-[9.5px] text-slate-400 font-semibold truncate max-w-[150px] leading-tight">
+              {store ? store.name : 'Panel Admin'}
+            </span>
+          </div>
         </div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1 rounded-md text-on-surface-variant hover:bg-slate-100"
+          className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          title="Menú de Navegación"
         >
-          <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          <span className="material-symbols-outlined text-[22px]">{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>
       </div>
 
@@ -198,7 +207,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60" 
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs" 
               onClick={() => setMobileMenuOpen(false)} 
             />
             {/* Sidebar deslizante */}
@@ -237,7 +246,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 bg-slate-50/60 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-slate-50/60 overflow-y-auto">
           <div className="max-w-7xl mx-auto w-full space-y-6">
             <AnimatePage key={pathname}>
               {children}

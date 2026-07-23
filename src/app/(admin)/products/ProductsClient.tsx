@@ -470,58 +470,58 @@ export default function ProductsClient({ store, initialCategories, initialProduc
 
   return (
     <div className="space-y-6 font-body-base text-on-surface">
-      {/* Cabecera (Diseño de Stitch) */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      {/* Cabecera Adaptada a Móviles */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Catálogo de Productos</h1>
-          <p className="text-sm text-on-surface-variant">Gestiona tu inventario, precios y disponibilidad.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Catálogo de Productos</h1>
+          <p className="text-xs md:text-sm text-on-surface-variant">Gestiona tu inventario, precios y disponibilidad.</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex bg-slate-100 p-1 rounded border border-border-subtle mr-2">
+        
+        {/* Barra de herramientas adaptable */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-border-subtle">
             <button
               onClick={() => setActiveTab('products')}
-              className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${
-                activeTab === 'products' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'products' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               Productos
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-4 py-1.5 rounded text-xs font-bold transition-all ${
-                activeTab === 'categories' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'categories' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               Categorías
             </button>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded border border-border-subtle mr-2">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-border-subtle">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded transition-all flex items-center gap-1 text-xs font-bold ${
-                viewMode === 'grid' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-bold ${
+                viewMode === 'grid' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Vista en cuadrícula"
             >
-              <span className="material-symbols-outlined text-[16px]">grid_view</span>
-              <span className="hidden sm:inline">Grid</span>
+              <span className="material-symbols-outlined text-[18px]">grid_view</span>
             </button>
             <button
               onClick={() => setViewMode('pos')}
-              className={`p-1.5 rounded transition-all flex items-center gap-1 text-xs font-bold ${
-                viewMode === 'pos' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-bold ${
+                viewMode === 'pos' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Vista rápida lista POS"
             >
-              <span className="material-symbols-outlined text-[16px]">view_list</span>
-              <span className="hidden sm:inline">POS Lista</span>
+              <span className="material-symbols-outlined text-[18px]">view_list</span>
             </button>
           </div>
 
           <button
             onClick={() => handleOpenProductModal(null)}
-            className="flex items-center gap-2 bg-admin-deep-blue text-on-primary px-5 py-2 rounded font-bold text-xs hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center justify-center gap-1.5 bg-admin-deep-blue text-on-primary px-4 py-2 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-xs flex-1 md:flex-none"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
             <span>Añadir Producto</span>

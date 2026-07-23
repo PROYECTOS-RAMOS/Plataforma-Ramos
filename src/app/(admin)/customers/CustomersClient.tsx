@@ -269,7 +269,7 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead className="bg-slate-50 border-b border-border-subtle text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-4">Cliente</th>
