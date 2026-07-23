@@ -9,8 +9,12 @@ import Logo from '@/components/marketing/Logo'
 import { Sparkles, Mail, Lock, Loader2, ArrowRight, CheckCircle2, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react'
 import AuthTransitionOverlay from '@/components/auth/AuthTransitionOverlay'
 import { motion } from 'framer-motion'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 export default function LoginClient() {
+  // Bloquear el scroll de la página de fondo al 100% en la pantalla de login (Estilo App Android)
+  useScrollLock(true)
+
   const searchParams = useSearchParams()
   const mode = searchParams.get('mode')
   const errorParam = searchParams.get('error')
@@ -37,7 +41,6 @@ export default function LoginClient() {
     } else {
       setIsSignUp(false)
     }
-    // Limpiar alertas al cambiar de modo
     setError(null)
     setMessage(null)
     setIsEmailTaken(false)
@@ -145,7 +148,7 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 bg-slate-50/70 min-h-[calc(100dvh-56px)] sm:min-h-[calc(100dvh-68px)] max-h-[calc(100dvh-56px)] sm:max-h-[calc(100dvh-68px)] relative overflow-hidden select-none font-sans">
+    <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-slate-950 text-white flex flex-col justify-between p-4 sm:p-6 overflow-hidden select-none font-sans">
       <AuthTransitionOverlay
         isVisible={authTransition}
         userEmailOrName={email}
@@ -155,33 +158,38 @@ export default function LoginClient() {
         }}
       />
 
-      {/* Luces y Glows Ambientales */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-tr from-blue-600/[0.04] via-indigo-600/[0.04] to-emerald-500/[0.03] rounded-full blur-[100px] pointer-events-none" />
+      {/* Luces y Glows Ambientales Neón estilo App */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-gradient-to-tr from-blue-600/15 via-indigo-600/15 to-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
 
-      {/* Contenedor Principal Ajustado al Alto de Pantalla (No Scroll) */}
-      <div className="w-full max-w-sm sm:max-w-md bg-white/95 border border-slate-200/80 rounded-3xl p-5 sm:p-7 shadow-[0_20px_50px_rgba(15,23,42,0.06)] relative z-10 backdrop-blur-xl transition-all duration-300 flex flex-col gap-4">
-        
-        {/* Cabecera Superior: Volver al Inicio + Marca */}
-        <div className="flex items-center justify-between">
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-blue-600 transition-colors group"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Inicio</span>
-          </Link>
+      {/* 1. Header Estilo App Móvil Android / iOS */}
+      <div className="relative z-10 flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-300 hover:text-white transition-colors group bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1.5 backdrop-blur-md"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform text-blue-400" />
+          <span>Inicio</span>
+        </Link>
 
-          <div className="flex items-center gap-1.5">
-            <Logo size={24} />
-            <span className="font-black text-xs tracking-tight flex items-center gap-1">
-              <span className="text-[#EF4444]">Plataforma</span>
-              <span className="text-[#3B82F6]">Ramos</span>
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
+          <Logo size={24} />
+          <span className="font-black text-xs tracking-tight flex items-center gap-1">
+            <span className="text-[#EF4444]">Plataforma</span>
+            <span className="text-[#3B82F6]">Ramos</span>
+          </span>
         </div>
 
+        <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 text-[10px] font-bold text-emerald-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>SSL Activo</span>
+        </div>
+      </div>
+
+      {/* 2. Tarjeta Central Principal Adaptada a Pantalla Completa */}
+      <div className="relative z-10 max-w-sm sm:max-w-md w-full mx-auto my-auto bg-slate-900/90 border border-slate-800/90 shadow-[0_0_60px_rgba(0,0,0,0.6)] rounded-3xl p-5 sm:p-7 backdrop-blur-2xl transition-all duration-300 flex flex-col gap-4">
+        
         {/* Selector de Pestañas Animado (Pill Switcher) */}
-        <div className="bg-slate-100/80 p-1 rounded-2xl flex items-center relative border border-slate-200/60">
+        <div className="bg-slate-950 p-1 rounded-2xl flex items-center relative border border-slate-800">
           <button
             type="button"
             onClick={() => {
@@ -192,13 +200,13 @@ export default function LoginClient() {
               setIsGoogleAccountExists(false)
             }}
             className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all relative z-10 text-center ${
-              !isSignUp ? 'text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+              !isSignUp ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             {!isSignUp && (
               <motion.div
                 layoutId="activeTabPill"
-                className="absolute inset-0 bg-white rounded-xl border border-slate-200/60 shadow-xs z-[-1]"
+                className="absolute inset-0 bg-slate-800 rounded-xl border border-slate-700/60 z-[-1]"
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               />
             )}
@@ -215,13 +223,13 @@ export default function LoginClient() {
               setIsGoogleAccountExists(false)
             }}
             className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all relative z-10 text-center ${
-              isSignUp ? 'text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+              isSignUp ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             {isSignUp && (
               <motion.div
                 layoutId="activeTabPill"
-                className="absolute inset-0 bg-white rounded-xl border border-slate-200/60 shadow-xs z-[-1]"
+                className="absolute inset-0 bg-slate-800 rounded-xl border border-slate-700/60 z-[-1]"
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               />
             )}
@@ -231,10 +239,10 @@ export default function LoginClient() {
 
         {/* Título y Subtítulo Dinámicos */}
         <div className="text-center space-y-0.5">
-          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
             {isSignUp ? 'Empieza gratis hoy' : 'Bienvenido de nuevo'}
           </h1>
-          <p className="text-[11px] text-slate-400 font-semibold truncate max-w-xs mx-auto">
+          <p className="text-[11px] text-slate-400 font-medium truncate max-w-xs mx-auto">
             {isSignUp
               ? 'Digitaliza tu tienda e inventario en minutos'
               : 'Gestiona tus catálogos, pedidos y ventas'}
@@ -244,8 +252,8 @@ export default function LoginClient() {
         {/* Formulario Compacto */}
         <form onSubmit={handleEmailAuth} className="space-y-3 text-xs font-semibold">
           <div className="space-y-1">
-            <label className="text-slate-700 text-[11px] font-bold flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-slate-400" />
+            <label className="text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-blue-400" />
               <span>Correo electrónico</span>
             </label>
             <input
@@ -254,14 +262,14 @@ export default function LoginClient() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white font-medium text-slate-800 transition-all placeholder-slate-400 text-xs h-10"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-medium text-white transition-all placeholder-slate-500 text-xs h-10.5"
               placeholder="ejemplo@correo.com"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-slate-700 text-[11px] font-bold flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
+            <label className="text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-indigo-400" />
               <span>Contraseña</span>
             </label>
             <input
@@ -270,19 +278,19 @@ export default function LoginClient() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white font-medium text-slate-800 transition-all placeholder-slate-400 text-xs h-10"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-medium text-white transition-all placeholder-slate-500 text-xs h-10.5"
               placeholder="••••••••"
             />
           </div>
 
           {/* Alertas */}
           {isEmailTaken && (
-            <div className="p-3 bg-blue-50 border border-blue-200/60 rounded-xl space-y-2 text-slate-700 text-[11px]">
-              <div className="flex items-center gap-1.5 text-blue-700 font-bold">
-                <AlertCircle className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+            <div className="p-3 bg-blue-950/60 border border-blue-800/80 rounded-xl space-y-2 text-slate-200 text-[11px]">
+              <div className="flex items-center gap-1.5 text-blue-400 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                 <span>Esta cuenta ya existe</span>
               </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-tight">
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">
                 El correo <strong>{email}</strong> ya está registrado.
               </p>
               <Button
@@ -300,9 +308,9 @@ export default function LoginClient() {
           )}
 
           {isGoogleAccountExists && (
-            <div className="p-3 bg-blue-50 border border-blue-200/60 rounded-xl space-y-2 text-slate-700 text-[11px]">
-              <div className="flex items-center gap-1.5 text-blue-700 font-bold">
-                <AlertCircle className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+            <div className="p-3 bg-blue-950/60 border border-blue-800/80 rounded-xl space-y-2 text-slate-200 text-[11px]">
+              <div className="flex items-center gap-1.5 text-blue-400 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                 <span>Cuenta de Google registrada</span>
               </div>
               <Button
@@ -320,15 +328,15 @@ export default function LoginClient() {
           )}
 
           {error && !isGoogleAccountExists && (
-            <div className="p-2.5 bg-red-50 border border-red-200/60 rounded-xl text-red-600 flex items-center gap-2 font-medium text-[11px]">
-              <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+            <div className="p-2.5 bg-red-950/60 border border-red-800/80 rounded-xl text-red-300 flex items-center gap-2 font-medium text-[11px]">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
               <span className="truncate">{error}</span>
             </div>
           )}
 
           {message && (
-            <div className="p-2.5 bg-emerald-50 border border-emerald-200/60 rounded-xl text-emerald-700 flex items-center gap-2 font-medium text-[11px]">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+            <div className="p-2.5 bg-emerald-950/60 border border-emerald-800/80 rounded-xl text-emerald-300 flex items-center gap-2 font-medium text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               <span>{message}</span>
             </div>
           )}
@@ -337,7 +345,7 @@ export default function LoginClient() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 border border-blue-500/20 shadow-md shadow-blue-500/15 h-10 text-xs"
+            className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 hover:opacity-95 text-white font-bold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 border border-blue-500/20 shadow-lg shadow-blue-600/20 h-11 text-xs"
           >
             {loading ? (
               <>
@@ -354,12 +362,12 @@ export default function LoginClient() {
         </form>
 
         {/* Separador */}
-        <div className="relative my-1 select-none">
+        <div className="relative my-0.5 select-none">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200/70" />
+            <span className="w-full border-t border-slate-800" />
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
-            <span className="bg-white px-3 text-slate-400">O continuar con</span>
+            <span className="bg-slate-900 px-3 text-slate-500">O continuar con</span>
           </div>
         </div>
 
@@ -368,7 +376,7 @@ export default function LoginClient() {
           onClick={handleGoogleLogin}
           disabled={loading}
           variant="outline"
-          className="w-full flex items-center justify-center gap-2 border-slate-200/80 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all active:scale-[0.98] bg-white h-10 text-xs"
+          className="w-full flex items-center justify-center gap-2 border-slate-800 hover:bg-slate-800/80 text-white font-bold rounded-xl transition-all active:scale-[0.98] bg-slate-950 h-10.5 text-xs"
         >
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
@@ -390,6 +398,12 @@ export default function LoginClient() {
           </svg>
           <span>Acceder con Google</span>
         </Button>
+      </div>
+
+      {/* 3. Footer Estilo App Móvil */}
+      <div className="relative z-10 flex items-center justify-between border-t border-slate-800/80 pt-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+        <span>Plataforma Ramos © 2026</span>
+        <span>App Móvil & Web</span>
       </div>
     </div>
   )
