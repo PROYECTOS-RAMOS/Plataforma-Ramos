@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 interface Customer {
   id: string
@@ -31,6 +32,7 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
 
   // Estados Modal Crear/Editar Cliente
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  useScrollLock(isCustomerModalOpen)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [custName, setCustName] = useState('')
   const [custPhone, setCustPhone] = useState('')
@@ -359,9 +361,9 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
       {/* MODAL CREAR / EDITAR CLIENTE */}
       {isCustomerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="fixed inset-0 bg-transparent" onClick={() => setIsCustomerModalOpen(false)} />
-          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden z-10 border border-slate-200">
-            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+          <div className="fixed inset-0 bg-transparent touch-none" onClick={() => setIsCustomerModalOpen(false)} onTouchMove={(e) => e.preventDefault()} />
+          <div className="relative bg-white w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden z-10 border border-slate-200">
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
               <h3 className="font-bold text-slate-900 text-sm">
                 {selectedCustomer ? 'Editar Ficha de Cliente' : 'Añadir Nuevo Cliente'}
               </h3>
@@ -370,7 +372,7 @@ export default function CustomersClient({ store, initialCustomers }: CustomersCl
               </button>
             </div>
 
-            <form onSubmit={handleSaveCustomer} className="p-6 space-y-4 text-xs font-semibold">
+            <form onSubmit={handleSaveCustomer} className="p-6 space-y-4 text-xs font-semibold overflow-y-auto overscroll-contain flex-1">
               <div className="space-y-1">
                 <label className="block text-slate-700">Nombre Completo</label>
                 <input

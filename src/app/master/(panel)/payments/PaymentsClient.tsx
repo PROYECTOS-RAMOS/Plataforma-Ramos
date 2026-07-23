@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import {
   CreditCard,
   Plus,
@@ -68,19 +69,7 @@ export default function PaymentsClient({ initialPayments, initialStores }: Payme
   const [successMsg, setSuccessMsg] = useState('')
 
   // Bloquear el scroll de la página de fondo cuando el modal de pago está abierto
-  React.useEffect(() => {
-    if (showModal) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [showModal])
+  useScrollLock(showModal)
 
   const getStoreName = (storeId: string) => {
     const store = stores.find(s => s.id === storeId)
@@ -274,8 +263,9 @@ export default function PaymentsClient({ initialPayments, initialStores }: Payme
 
       {/* Modal de Registrar Pago */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/70 touch-none" onClick={() => setShowModal(false)} onTouchMove={(e) => e.preventDefault()} />
+          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto overscroll-contain space-y-5 shadow-2xl z-10">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2 text-indigo-400">
                 <Receipt className="w-5 h-5" />

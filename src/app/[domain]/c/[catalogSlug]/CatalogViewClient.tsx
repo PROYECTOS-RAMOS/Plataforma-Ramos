@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Link } from 'next-view-transitions'
 import { useCart } from '@/hooks/useCart'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { CartItem } from '@/contexts/CartContext'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -131,19 +132,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
   const [isSubdomain, setIsSubdomain] = useState(false)
 
   // Bloquear scroll del cuerpo cuando el carrito o modal de detalle de producto está abierto
-  useEffect(() => {
-    if (isCartOpen || selectedProduct) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [isCartOpen, selectedProduct])
+  useScrollLock(isCartOpen || !!selectedProduct)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -911,7 +900,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
       {/* Modal de Variantes */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-0 md:p-4 bg-black/60">
-          <div className="fixed inset-0 bg-transparent" onClick={() => setSelectedProduct(null)} />
+          <div className="fixed inset-0 bg-transparent touch-none" onClick={() => setSelectedProduct(null)} onTouchMove={(e) => e.preventDefault()} />
           <div className="relative bg-white w-full max-w-md rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-300">
             <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 bg-slate-50">
               <div>
@@ -923,7 +912,7 @@ export default function CatalogViewClient({ store, catalog, categories, products
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto flex-1 space-y-6">
+            <div className="p-5 overflow-y-auto overscroll-contain flex-1 space-y-6">
               {selectedProduct.product_options.map((opt) => (
                 <div key={opt.id} className="space-y-3">
                   <div className="flex justify-between items-center">

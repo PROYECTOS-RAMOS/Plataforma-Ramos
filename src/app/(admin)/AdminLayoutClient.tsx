@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import AnimatePage from '@/components/ui/AnimatePage'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 interface AdminLayoutClientProps {
   profile: {
@@ -30,19 +31,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   const supabase = createClient()
 
   // Bloquear el scroll de la página de fondo cuando el menú lateral móvil está abierto
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [mobileMenuOpen])
+  useScrollLock(mobileMenuOpen)
 
   // Cerrar el menú lateral automáticamente al cambiar de página
   useEffect(() => {

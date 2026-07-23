@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Plus, Edit2, Trash2, Globe, Check, AlertCircle, Sparkles, X, Share2, BookOpen } from 'lucide-react'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 interface Catalog {
   id: string
@@ -65,19 +66,7 @@ export default function CatalogsClient({ store, initialCatalogs, products, initi
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
 
   // Bloquear el scroll de la página de fondo cuando el modal de catálogo está abierto
-  React.useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [isModalOpen])
+  useScrollLock(isModalOpen)
 
   // Generar slug automáticamente al cambiar el nombre
   const handleNameChange = (nameVal: string) => {
@@ -411,8 +400,9 @@ export default function CatalogsClient({ store, initialCatalogs, products, initi
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50"
+              className="absolute inset-0 bg-black/50 touch-none"
               onClick={() => setIsModalOpen(false)}
+              onTouchMove={(e) => e.preventDefault()}
             />
 
             {/* Formulario Lateral */}
@@ -443,7 +433,7 @@ export default function CatalogsClient({ store, initialCatalogs, products, initi
               </div>
 
               {/* Formulario */}
-              <form onSubmit={handleSaveCatalog} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs font-semibold leading-normal">
+              <form onSubmit={handleSaveCatalog} className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-5 text-xs font-semibold leading-normal">
                 {error && (
                   <div className="p-3.5 bg-red-50 border border-red-200/50 rounded-xl text-red-600 font-semibold flex gap-2">
                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />

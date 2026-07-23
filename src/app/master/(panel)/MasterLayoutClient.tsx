@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { 
   TrendingUp, 
   Store, 
@@ -34,19 +35,7 @@ export default function MasterLayoutClient({ profile, children }: MasterLayoutCl
   const supabase = createClient()
 
   // Bloquear el scroll de la página de fondo cuando el menú lateral móvil está abierto
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [mobileMenuOpen])
+  useScrollLock(mobileMenuOpen)
 
   // Cerrar el menú lateral automáticamente al cambiar de página
   useEffect(() => {
@@ -67,40 +56,39 @@ export default function MasterLayoutClient({ profile, children }: MasterLayoutCl
   }
 
   const isActiveLink = (href: string) => {
-    return pathname === href || pathname.startsWith(href + '/')
+    return pathname.startsWith(href)
   }
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col justify-between bg-slate-900 border-r border-slate-800/80 py-6 px-4 text-slate-200">
+    <div className="h-full flex flex-col justify-between bg-slate-900 text-slate-100 p-5 border-r border-slate-800/80">
       <div className="space-y-6">
-        {/* Cabecera del Panel */}
-        <div className="px-3 mb-2 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-indigo-400 font-black">
-            <ShieldAlert className="w-5 h-5" />
-            <span className="text-sm uppercase tracking-wider">Master Panel</span>
+        {/* Cabecera Master */}
+        <div className="flex items-center gap-3 px-2 py-1">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-sm shadow-md">
+            M
           </div>
-          <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-0.5 tracking-wider">
-            Plataforma Ramos
-          </p>
+          <div>
+            <h1 className="font-extrabold text-sm text-white tracking-tight leading-none">PANEL MASTER</h1>
+            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Plataforma Ramos</span>
+          </div>
         </div>
 
-        {/* Menú de Navegación */}
-        <nav className="space-y-1">
+        {/* Links de Navegación */}
+        <nav className="space-y-1.5 pt-2">
           {navigation.map((item) => {
-            const active = isActiveLink(item.href)
             const Icon = item.icon
+            const active = isActiveLink(item.href)
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                  active 
-                    ? 'text-white bg-indigo-600 shadow shadow-indigo-600/30' 
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  active
+                    ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
-                onClick={() => setMobileMenuOpen(false)}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
+                <Icon className={`w-4 h-4 ${active ? 'text-indigo-400' : 'text-slate-400'}`} />
                 <span>{item.name}</span>
               </Link>
             )
@@ -108,21 +96,13 @@ export default function MasterLayoutClient({ profile, children }: MasterLayoutCl
         </nav>
       </div>
 
-      {/* Perfil del Super Admin y Logout */}
-      <div className="border-t border-slate-800 pt-4 space-y-4">
-        <div className="flex items-center gap-3 px-3">
-          {profile.avatar_url ? (
-            <img 
-              src={profile.avatar_url} 
-              alt={profile.full_name || 'Admin'} 
-              className="w-9 h-9 rounded-full object-cover border border-slate-700"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
-              {(profile.full_name || 'A').charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div className="min-w-0 flex-1 text-[11px]">
+      {/* Footer Usuario Master */}
+      <div className="pt-4 border-t border-slate-800/80 space-y-3">
+        <div className="flex items-center gap-3 px-2">
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-indigo-400">
+            {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'M'}
+          </div>
+          <div className="min-w-0 flex-1 text-xs">
             <div className="font-extrabold text-white truncate">{profile.full_name || 'Administrador'}</div>
             <div className="text-indigo-400 font-bold uppercase text-[9px] tracking-wider">
               Super Administrador
@@ -156,18 +136,18 @@ export default function MasterLayoutClient({ profile, children }: MasterLayoutCl
       {/* Menú de Cabecera Móvil */}
       <div className="md:hidden bg-slate-900 text-slate-200 border-b border-slate-800/60 px-4 py-3 flex justify-between items-center z-40 sticky top-0">
         <div className="flex items-center gap-2 text-indigo-400 font-black">
-          <ShieldAlert className="w-4 h-4" />
-          <span className="text-xs uppercase tracking-wider">Ramos Master</span>
+          <ShieldCheck className="w-5 h-5" />
+          <span className="text-xs tracking-wider uppercase">PANEL MASTER</span>
         </div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800"
+          className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Sidebar de Escritorio (Fixed) */}
+      {/* Sidebar Escritorio (Fijo) */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-[260px] z-40">
         <SidebarContent />
       </aside>

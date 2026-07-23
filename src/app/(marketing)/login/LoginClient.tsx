@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/marketing/Logo'
 import { Sparkles, Mail, Lock, Loader2, ArrowRight, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react'
+import AuthTransitionOverlay from '@/components/auth/AuthTransitionOverlay'
 
 export default function LoginClient() {
   const searchParams = useSearchParams()
@@ -24,6 +25,7 @@ export default function LoginClient() {
   const [isEmailTaken, setIsEmailTaken] = useState(false)
   const [isGoogleAccountExists, setIsGoogleAccountExists] = useState(false)
   const [googleEmail, setGoogleEmail] = useState('')
+  const [authTransition, setAuthTransition] = useState(false)
 
   const supabase = createClient()
 
@@ -121,7 +123,7 @@ export default function LoginClient() {
         if (signInError) {
           setError(signInError.message)
         } else {
-          window.location.href = '/dashboard'
+          setAuthTransition(true)
         }
       }
     } catch (err: any) {
@@ -156,6 +158,14 @@ export default function LoginClient() {
 
   return (
     <div className="flex-1 flex items-center justify-center p-3 sm:p-6 bg-white sm:bg-slate-50/50 min-h-[calc(100dvh-64px)] sm:min-h-[calc(100dvh-80px)] relative overflow-hidden">
+      <AuthTransitionOverlay
+        isVisible={authTransition}
+        userEmailOrName={email}
+        provider="email"
+        onComplete={() => {
+          window.location.href = '/dashboard'
+        }}
+      />
       {/* Luces y Glows de Fondo */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-red-600/[0.03] rounded-full blur-[90px] pointer-events-none" />

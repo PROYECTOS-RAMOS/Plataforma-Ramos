@@ -5,12 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Sparkles, Mail, Lock, Loader2, ArrowRight, ShieldAlert, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import AuthTransitionOverlay from '@/components/auth/AuthTransitionOverlay'
 
 export default function MasterLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authTransition, setAuthTransition] = useState(false)
 
   const supabase = createClient()
 
@@ -43,8 +45,8 @@ export default function MasterLoginPage() {
         throw new Error('Acceso denegado. Esta sección es exclusiva para Super Administradores.')
       }
 
-      // Redirigir a Master Dashboard
-      window.location.href = '/master/dashboard'
+      // Redirigir a Master Dashboard con animación de carga
+      setAuthTransition(true)
 
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión.')
@@ -54,6 +56,16 @@ export default function MasterLoginPage() {
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 bg-slate-950 min-h-screen relative overflow-hidden text-slate-100 font-sans">
+      <AuthTransitionOverlay
+        isVisible={authTransition}
+        title="¡Acceso Master Verificado!"
+        subtitle="Cargando Panel de Control de Plataforma Ramos..."
+        userEmailOrName={email}
+        provider="master"
+        onComplete={() => {
+          window.location.href = '/master/dashboard'
+        }}
+      />
       {/* Luces y Glows de Fondo */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-600/[0.05] rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 w-[350px] h-[350px] bg-blue-600/[0.05] rounded-full blur-[90px] pointer-events-none" />

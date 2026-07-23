@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Link } from 'next-view-transitions'
 import { useCart } from '@/hooks/useCart'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { CartItem } from '@/contexts/CartContext'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -122,19 +123,7 @@ export default function StorefrontClient({ store, categories, products, shipping
   const [isSubdomain, setIsSubdomain] = useState(false)
 
   // Bloquear scroll del cuerpo cuando el carrito o modal de detalle de producto está abierto
-  useEffect(() => {
-    if (isCartOpen || selectedProduct) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [isCartOpen, selectedProduct])
+  useScrollLock(isCartOpen || !!selectedProduct)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -970,7 +959,7 @@ export default function StorefrontClient({ store, categories, products, shipping
       {/* 5. MODAL / BOTTOM SHEET DE OPCIONES DE PRODUCTO */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs">
-          <div className="fixed inset-0 bg-transparent" onClick={() => setSelectedProduct(null)} />
+          <div className="fixed inset-0 bg-transparent touch-none" onClick={() => setSelectedProduct(null)} onTouchMove={(e) => e.preventDefault()} />
           <div className="relative bg-white w-full max-w-lg max-h-[85vh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 shadow-2xl overflow-hidden z-10">
             {/* Tirador táctil visual para teléfonos */}
             <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2 sm:hidden flex-shrink-0" />
@@ -987,7 +976,7 @@ export default function StorefrontClient({ store, categories, products, shipping
             </div>
 
             {/* Listado de Opciones */}
-            <div className="p-5 overflow-y-auto flex-1 space-y-6">
+            <div className="p-5 overflow-y-auto overscroll-contain flex-1 space-y-6">
               {selectedProduct.product_options.map((opt) => (
                 <div key={opt.id} className="space-y-3">
                   <div className="flex justify-between items-center">

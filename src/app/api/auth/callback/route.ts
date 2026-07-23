@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     }
 
     if (exchangeSuccess && userData?.user) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(`${origin}/auth/success?next=${encodeURIComponent(next)}&provider=google`)
     } else {
       console.error('Error definitivo al intercambiar código por sesión tras 3 intentos:', lastError)
       const errMsg = lastError?.message || lastError?.description || 'auth-callback-failed'

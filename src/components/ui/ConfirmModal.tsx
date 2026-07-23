@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -27,19 +28,8 @@ export default function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [isOpen])
+  useScrollLock(isOpen)
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -50,7 +40,8 @@ export default function ConfirmModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onTouchMove={(e) => e.preventDefault()}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity touch-none"
           />
 
           {/* Tarjeta Modal */}

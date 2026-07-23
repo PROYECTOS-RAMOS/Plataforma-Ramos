@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 interface Category {
   id: string
@@ -126,19 +127,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
   const supabase = createClient()
 
   // Bloquear el scroll de la página de fondo cuando el modal de producto está abierto
-  React.useEffect(() => {
-    if (isProductModalOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-    }
-  }, [isProductModalOpen])
+  useScrollLock(isProductModalOpen)
 
   // Subir imagen del producto a R2
   const handleUploadProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -853,8 +842,9 @@ export default function ProductsClient({ store, initialCategories, initialProduc
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60" 
+              className="fixed inset-0 bg-black/60 touch-none" 
               onClick={() => setIsProductModalOpen(false)} 
+              onTouchMove={(e) => e.preventDefault()}
             />
             {/* Contenedor del Modal con resorte (spring) y desplazamiento */}
             <motion.div 
@@ -877,7 +867,7 @@ export default function ProductsClient({ store, initialCategories, initialProduc
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 text-xs font-semibold overflow-y-auto flex-1">
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 text-xs font-semibold overflow-y-auto overscroll-contain flex-1">
               <div className="space-y-1">
                 <label className="block text-[10px] text-on-surface-variant uppercase tracking-wider">
                   Nombre del Producto
