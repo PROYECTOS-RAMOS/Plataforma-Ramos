@@ -155,13 +155,13 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-slate-50/50 min-h-[calc(100dvh-64px)] sm:min-h-[calc(100dvh-80px)] relative overflow-hidden">
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-6 bg-white sm:bg-slate-50/50 min-h-[calc(100dvh-64px)] sm:min-h-[calc(100dvh-80px)] relative overflow-hidden">
       {/* Luces y Glows de Fondo */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-red-600/[0.03] rounded-full blur-[90px] pointer-events-none" />
 
       {/* Tarjeta de Autenticación Premium */}
-      <div className="w-full max-w-md bg-white sm:bg-slate-50 border border-slate-200/80 rounded-2xl sm:rounded-[32px] p-5 sm:p-8 shadow-xl sm:shadow-[0_20px_50px_rgba(0,0,0,0.04)] relative z-10 transition-all duration-300">
+      <div className="w-full max-w-md bg-white sm:bg-slate-50 border-0 sm:border border-slate-200/80 rounded-2xl sm:rounded-[32px] p-5 sm:p-8 shadow-none sm:shadow-[0_20px_50px_rgba(0,0,0,0.04)] relative z-10 transition-all duration-300">
         
         {/* Botón Volver a Home */}
         <Link 

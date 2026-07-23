@@ -2,11 +2,18 @@
 
 import React, { useState, useEffect } from 'react'
 import { Link } from 'next-view-transitions'
+import { usePathname } from 'next/navigation'
 import Logo from '@/components/marketing/Logo'
 import { Menu, X, ChevronRight, User, ShoppingBag } from 'lucide-react'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Cerrar el menú automáticamente al cambiar de ruta
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   // Bloquear el scroll de la página cuando el menú móvil está abierto
   useEffect(() => {
@@ -30,7 +37,7 @@ export default function Header() {
 
   return (
     <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between relative z-50">
         
         {/* Logo responsivo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 group z-50" onClick={() => setMobileMenuOpen(false)}>
@@ -85,10 +92,10 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Menú Desplegable Móvil que ocupa toda la pantalla debajo del header */}
+      {/* Menú Desplegable Móvil que se posiciona desde la parte inferior de la cabecera */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 bottom-0 top-[64px] sm:top-[80px] bg-white z-40 flex flex-col justify-between overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 border-t border-slate-200/80">
-          <div className="px-5 py-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+        <div className="lg:hidden absolute top-full left-0 right-0 h-[calc(100dvh-64px)] sm:h-[calc(100dvh-80px)] bg-white z-50 flex flex-col justify-between overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 border-t border-slate-200/80">
+          <div className="px-5 py-6 space-y-4 overflow-y-auto flex-1 min-h-0 bg-white">
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block px-1">
               Menú de Navegación
             </span>
