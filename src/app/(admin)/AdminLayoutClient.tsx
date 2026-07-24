@@ -80,7 +80,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   }
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col justify-between bg-slate-900 text-white py-6 px-4">
+    <div className="h-full flex flex-col justify-between bg-slate-800 text-white py-6 px-4">
       <div className="space-y-6">
         {/* Cabecera del Panel */}
         <div className="px-3 mb-2 flex flex-col gap-1">
@@ -90,7 +90,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
             </div>
             <div>
               <h1 className="text-sm font-black tracking-wider uppercase text-white">PLATAFORMA RAMOS</h1>
-              <p className="text-[10px] text-slate-400 font-semibold truncate max-w-[170px]">
+              <p className="text-[10px] text-slate-300 font-semibold truncate max-w-[170px]">
                 {store ? store.name : 'Panel Administrador'}
               </p>
             </div>
@@ -101,13 +101,13 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
               href={publicStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-between px-3 py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl transition-all border border-slate-700/60 shadow-xs group"
+              className="mt-3 flex items-center justify-between px-3 py-2.5 bg-slate-900/60 hover:bg-slate-900/90 text-slate-200 hover:text-white rounded-xl transition-all border border-slate-700/80 shadow-xs group"
             >
               <div className="flex items-center gap-2.5 min-w-0 pr-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="text-[11px] font-bold text-white leading-tight">Visitar mi Tienda</span>
-                  <span className="text-[9.5px] font-mono text-slate-400 group-hover:text-blue-300 transition-colors truncate font-semibold">
+                  <span className="text-[9.5px] font-mono text-slate-300 group-hover:text-blue-300 transition-colors truncate font-semibold">
                     {store.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'rutaslima.app'}
                   </span>
                 </div>
@@ -129,11 +129,11 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   active 
                     ? 'text-white bg-blue-600 shadow-md shadow-blue-600/20' 
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className={`material-symbols-outlined text-[20px] ${active ? 'text-white' : 'text-slate-400'}`}>
+                <span className={`material-symbols-outlined text-[20px] ${active ? 'text-white' : 'text-slate-300'}`}>
                   {item.icon}
                 </span>
                 <span>{item.name}</span>
@@ -144,22 +144,22 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
       </div>
 
       {/* Perfil del Vendedor y Logout */}
-      <div className="border-t border-slate-800/80 pt-4 space-y-3">
+      <div className="border-t border-slate-700/60 pt-4 space-y-3">
         <div className="flex items-center gap-3 px-2">
           {profile.avatar_url ? (
             <img 
               src={profile.avatar_url} 
               alt={profile.full_name} 
-              className="w-9 h-9 rounded-full object-cover border border-slate-700"
+              className="w-9 h-9 rounded-full object-cover border border-slate-600"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-slate-800 text-blue-400 border border-slate-700 flex items-center justify-center font-black text-xs">
+            <div className="w-9 h-9 rounded-full bg-slate-700 text-blue-300 border border-slate-600 flex items-center justify-center font-black text-xs">
               {profile.full_name.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1 text-xs">
             <div className="font-bold text-white truncate">{profile.full_name}</div>
-            <div className="text-[10px] text-slate-400 truncate">
+            <div className="text-[10px] text-slate-300 truncate">
               {profile.role === 'super_admin' ? 'Super Admin' : 'Vendedor Activo'}
             </div>
           </div>
@@ -168,9 +168,9 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
         <Button 
           onClick={handleLogout}
           variant="ghost" 
-          className="w-full justify-start text-slate-300 hover:text-red-400 hover:bg-slate-800/80 gap-3 px-3 h-10 text-xs font-semibold transition-colors"
+          className="w-full justify-start text-slate-300 hover:text-red-400 hover:bg-slate-700/60 gap-3 px-3 h-10 text-xs font-semibold transition-colors"
         >
-          <span className="material-symbols-outlined text-red-500">logout</span>
+          <span className="material-symbols-outlined text-red-400">logout</span>
           <span>Cerrar sesión</span>
         </Button>
       </div>
@@ -180,7 +180,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
   return (
     <div className="min-h-screen bg-slate-50 text-on-surface flex flex-col md:flex-row antialiased">
       {/* Menú de Cabecera Móvil 100% Fijo (Fixed Top Navbar) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900/95 backdrop-blur-md text-white border-b border-slate-800/80 px-4 flex justify-between items-center z-40 shadow-md">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-800/95 backdrop-blur-md text-white border-b border-slate-700/80 px-4 flex justify-between items-center z-40 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-xs shadow-xs">
             R
@@ -225,7 +225,7 @@ export default function AdminLayoutClient({ profile, store, children }: AdminLay
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative flex flex-col w-[280px] max-w-[80vw] h-full bg-slate-900 border-r border-slate-800 z-10 overflow-hidden shadow-2xl"
+              className="relative flex flex-col w-[280px] max-w-[80vw] h-full bg-slate-800 border-r border-slate-700 z-10 overflow-hidden shadow-2xl"
             >
               <SidebarContent />
             </motion.aside>
